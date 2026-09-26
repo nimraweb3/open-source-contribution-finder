@@ -1,13 +1,20 @@
-import React from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Explore from "./pages/Explore";
 
 const App = () => {
   return (
-    <div className="min-h-screen bg-[#fafafa] text-zinc-900">
-      <Navbar />
+    <BrowserRouter>
+      <div className="min-h-screen bg-[#fafafa] text-zinc-900">
+        <Navbar />
 
-      <main>{/* More components coming here */}</main>
-    </div>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 };
 
