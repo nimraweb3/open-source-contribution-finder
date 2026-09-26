@@ -1,12 +1,13 @@
+import React from "react";
+import Navbar from "./components/Navbar";
+
 const App = () => {
   return (
-    <main>
-      <section>
-        <h1>Open Source Contribution Finder</h1>
-        <p>Welcome to the Open Source Contribution Finder!</p>
-        <button>Find Issues</button>
-      </section>
-    </main>
+    <div className="min-h-screen bg-[#fafafa] text-zinc-900">
+      <Navbar />
+
+      <main>{/* More components coming here */}</main>
+    </div>
   );
 };
 
