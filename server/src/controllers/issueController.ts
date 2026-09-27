@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { searchGitHubIssues } from "../services/githubService.js";
+import { searchGitHubIssues } from "../services/githubService.ts";
 
 export const searchIssues = async (
   req: Request,
