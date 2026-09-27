@@ -9,6 +9,12 @@ import { fetchIssues } from "../services/issueService";
 import type { Issue } from "../types/issue";
 
 const Explore = () => {
+  const [searchParams] = useSearchParams();
+  // A new search owns its results and pagination, so late responses cannot mix searches.
+  return <ExploreResults key={searchParams.toString()} />;
+};
+
+const ExploreResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Data
@@ -19,7 +25,7 @@ const Explore = () => {
   const [page, setPage] = useState(1);
 
   // Loading
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Error
@@ -41,21 +47,11 @@ const Explore = () => {
   // --------------------------------------------------
 
   useEffect(() => {
-    if (!hasSearch) {
-      setIssues([]);
-      setTotal(0);
-      setError(null);
-      setPage(1);
-
-      return;
-    }
+    if (!hasSearch) return;
+    let active = true;
 
     const loadIssues = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        setPage(1);
-
         const data = await fetchIssues({
           query,
           language,
@@ -66,9 +62,11 @@ const Explore = () => {
           page: 1,
         });
 
+        if (!active) return;
         setIssues(data.issues);
         setTotal(data.total);
       } catch (error) {
+        if (!active) return;
         setIssues([]);
         setTotal(0);
 
@@ -78,11 +76,12 @@ const Explore = () => {
           setError("Something went wrong.");
         }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     loadIssues();
+    return () => { active = false; };
   }, [query, language, difficulty, label, state, sort, hasSearch]);
 
   // --------------------------------------------------
@@ -106,6 +105,7 @@ const Explore = () => {
   // --------------------------------------------------
 
   const handleLoadMore = async () => {
+    if (loadingMore) return;
     const nextPage = page + 1;
 
     try {
@@ -284,7 +284,7 @@ const Explore = () => {
                 RESULTS
             ============================================ */}
 
-            {hasSearch && !loading && !error && (
+            {hasSearch && !loading && (!error || issues.length > 0) && (
               <>
                 <IssueList issues={issues} />
 

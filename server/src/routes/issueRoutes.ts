@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { searchIssues } from "../controllers/issueController.js";
+import { searchIssues } from "../controllers/issueController.ts";
 
 const router = Router();
 
