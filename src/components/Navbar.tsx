@@ -1,5 +1,3 @@
-import React from "react";
-
 const Navbar = () => {
   return (
     <header className="border-b border-zinc-200 bg-white/80 backdrop-blur">
