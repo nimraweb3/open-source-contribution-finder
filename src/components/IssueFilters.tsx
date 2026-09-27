@@ -87,6 +87,7 @@ const IssueFilters = () => {
 
           <select
             id="difficulty"
+            aria-describedby="difficulty-help"
             value={searchParams.get("difficulty") ?? "Any difficulty"}
             onChange={(event) => updateFilter("difficulty", event.target.value)}
             className="mt-2 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400"
@@ -95,6 +96,10 @@ const IssueFilters = () => {
               <option key={difficulty}>{difficulty}</option>
             ))}
           </select>
+          <p id="difficulty-help" className="mt-2 text-xs leading-5 text-zinc-500">
+            Beginner uses “good first issue”; Intermediate uses “help wanted”.
+            Advanced adds no label restriction. Labels are not a difficulty guarantee.
+          </p>
         </div>
 
         {/* Label */}

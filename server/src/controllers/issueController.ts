@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { searchGitHubIssues } from "../services/githubService";
+import { searchGitHubIssues } from "../services/githubService.js";
 
 export const searchIssues = async (
   req: Request,
@@ -14,6 +14,14 @@ export const searchIssues = async (
     const label =
       typeof req.query.label === "string" ? req.query.label : undefined;
 
+    const difficulty =
+      typeof req.query.difficulty === "string" ? req.query.difficulty : undefined;
+
+    if (difficulty && !["Beginner", "Intermediate", "Advanced"].includes(difficulty)) {
+      res.status(400).json({ success: false, data: null, error: "Invalid difficulty filter." });
+      return;
+    }
+
     const state =
       typeof req.query.state === "string" ? req.query.state : "Open";
 
@@ -25,7 +33,7 @@ export const searchIssues = async (
         ? Math.max(Number(req.query.page) || 1, 1)
         : 1;
 
-    if (!query && !language && !label) {
+    if (!query && !language && !label && !difficulty) {
       res.status(400).json({
         success: false,
         data: null,
@@ -38,6 +46,7 @@ export const searchIssues = async (
     const result = await searchGitHubIssues({
       query,
       language,
+      difficulty,
       label,
       state,
       sort,

@@ -25,11 +25,12 @@ interface GitHubSearchResponse {
 
 export interface SearchIssueParams {
   query: string;
-  language?: string;
-  label?: string;
-  state?: string;
-  sort?: string;
-  page?: number;
+  language?: string | undefined;
+  difficulty?: string | undefined;
+  label?: string | undefined;
+  state?: string | undefined;
+  sort?: string | undefined;
+  page?: number | undefined;
 }
 
 const getRepositoryName = (repositoryUrl: string) => {
@@ -47,6 +48,7 @@ const getRepositoryUrl = (repositoryUrl: string) => {
 export const searchGitHubIssues = async ({
   query,
   language,
+  difficulty,
   label,
   state = "Open",
   sort = "Relevance",
@@ -68,8 +70,12 @@ export const searchGitHubIssues = async ({
     searchParts.push(`language:${language}`);
   }
 
-  if (label) {
-    searchParts.push(`label:"${label}"`);
+  const difficultyLabel = difficulty === "Beginner"
+    ? "good first issue"
+    : difficulty === "Intermediate" ? "help wanted" : undefined;
+
+  for (const selectedLabel of new Set([label, difficultyLabel])) {
+    if (selectedLabel) searchParts.push(`label:"${selectedLabel}"`);
   }
 
   const params = new URLSearchParams({
