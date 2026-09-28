@@ -1,6 +1,6 @@
 # Contribution-Finder
 
-A MERN application for finding open-source opportunities and tracking contributions from saved to merged. A near-black and lime interface with oversized typography, an illustrated contribution flow, animated marquees, scroll reveals, a progress counter, and responsive navigation.
+A MERN application for finding real open GitHub issues and tracking contributions from saved to merged. The homepage is the search tool: a GitHub-inspired dark interface with language and label filters, compact issue rows, and direct links to work on GitHub. No testimonials, marketing sections, or invented activity statistics.
 
 ## Quick demo
 
@@ -53,11 +53,13 @@ npm run test:api --prefix server
 ## Included
 
 - JWT access tokens in memory, rotating hashed refresh tokens in HttpOnly cookies, bcrypt password hashing, validation, rate limiting, origin checks, and private contribution ownership.
-- Search by topic/repository, filter by language/label/difficulty, sort by stars/recent updates/difficulty, and paginate results.
+- Live GitHub search by topic or owner/repository, language and issue label filters, optional unassigned-only results, sorting by updated/created/comments, and pagination.
 - Bookmarks, contribution status tracking, and profile tech stack/interests.
 - Loading, error, retry, and empty states; accessible form labels and focus states; mobile navigation and reduced motion support.
 - All requested core pages and seed/configuration files.
 
-Seed listings are **illustrative, not live GitHub issues**. Repository links take you to current GitHub issues. Contributor stories are labeled illustrative. Live GitHub synchronization, maintainer publishing, and email alerts are not included. Profile interests are stored for user preferences; automated matching is not implemented.
+The main page calls `/api/discover` for real GitHub issues; it never substitutes sample results when GitHub fails. Results are cached for one minute and stored in MongoDB so details and bookmarks remain available. Status reflects the last search, not a continuous sync. GitHub exposes at most the first 1,000 matches; use filters for broad searches. An optional `GITHUB_TOKEN` in `server/.env` increases GitHub's search limit. Keep it server-side.
+
+The seed script and `/api/issues` retain the earlier demo data for development, separate from the live discovery feed. Maintainer publishing and email alerts are not included. Profile interests are stored; automated matching is not implemented.
 
 For deployment, configure strong secrets and a managed MongoDB database, serve the frontend and API under the same site using HTTPS, and configure SPA fallback routing. Do not use the development database runner in production.
