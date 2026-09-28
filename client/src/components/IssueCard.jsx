@@ -1,25 +1,27 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Bookmark, Star, ArrowUpRight, CircleDot } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Bookmark, CircleDot, MessageSquare, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useBookmarks } from "../context/BookmarksContext";
 import { api } from "../services/api";
 import { Badge } from "./UI";
+
 export default function IssueCard({ issue }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { ids, mark } = useBookmarks();
   const saved = ids.includes(issue._id);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function save() {
-    if (!user) return navigate("/login");
+    if (!user)
+      return navigate("/login", { state: { from: `/issues/${issue._id}` } });
     setBusy(true);
     setError("");
     try {
       await api(`/contributions/${issue._id}`, {
         method: saved ? "DELETE" : "POST",
-        body: saved ? undefined : { status: "saved" },
       });
       mark(issue._id, !saved);
     } catch (err) {
@@ -28,63 +30,72 @@ export default function IssueCard({ issue }) {
       setBusy(false);
     }
   }
+  const updated = issue.externalUpdatedAt
+    ? new Date(issue.externalUpdatedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      })
+    : null;
   return (
-    <article className="issue-card">
-      <div className="issue-top">
-        <span className="repo-icon">
-          <CodeSymbol language={issue.language} />
-        </span>
-        <span className="repo-name">{issue.repository}</span>
+    <article className="issue-row">
+      <CircleDot className="open-issue-icon" size={19} />
+      <div className="issue-content">
+        <div className="repo-line">
+          <span>{issue.repository}</span>
+          {issue.number && (
+            <span className="issue-number">#{issue.number}</span>
+          )}
+        </div>
+        <Link
+          to={`/issues/${issue._id}`}
+          state={{ from: location.pathname + location.search }}
+          className="issue-title"
+        >
+          {issue.title}
+        </Link>
+        <div className="issue-labels">
+          {issue.labels.slice(0, 4).map((label) => (
+            <Badge key={label}>{label}</Badge>
+          ))}
+          {issue.labels.length > 4 && (
+            <span className="extra-labels">+{issue.labels.length - 4}</span>
+          )}
+        </div>
+        <div className="issue-meta">
+          {updated && <span>Updated {updated}</span>}
+          {issue.author && <span>by {issue.author}</span>}
+          <span className="comment-count">
+            <MessageSquare size={13} />
+            {issue.comments || 0}
+          </span>
+          {issue.assigned && <span>Assigned</span>}
+        </div>
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="issue-actions">
         <button
-          className={`icon-button save-button ${saved ? "is-saved" : ""}`}
-          aria-label={saved ? "Remove bookmark" : "Bookmark issue"}
+          className={`icon-button ${saved ? "is-saved" : ""}`}
+          aria-label={saved ? `Unsave ${issue.title}` : `Save ${issue.title}`}
+          title={saved ? "Unsave issue" : "Save for later"}
           disabled={busy}
           onClick={save}
         >
-          <Bookmark size={18} fill={saved ? "currentColor" : "none"} />
+          <Bookmark size={17} fill={saved ? "currentColor" : "none"} />
         </button>
+        <a
+          href={issue.url}
+          target="_blank"
+          rel="noreferrer"
+          className="github-issue-link"
+          aria-label={`Open ${issue.title} on GitHub`}
+        >
+          GitHub <ArrowUpRight size={14} />
+        </a>
       </div>
-      <Link to={`/issues/${issue._id}`} className="issue-title">
-        {issue.title}
-        <ArrowUpRight size={18} />
-      </Link>
-      <div className="issue-labels">
-        {issue.labels.slice(0, 2).map((label) => (
-          <Badge key={label}>{label}</Badge>
-        ))}
-      </div>
-      <div className="issue-meta">
-        <span>
-          <i className={`language-dot ${issue.language?.toLowerCase()}`} />
-          {issue.language}
-        </span>
-        <span>
-          <Star size={13} />
-          {(issue.stars / 1000).toFixed(1)}k
-        </span>
-        <span className="difficulty">
-          <CircleDot size={12} />
-          {issue.difficulty}
-        </span>
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
     </article>
-  );
-}
-function CodeSymbol({ language }) {
-  return (
-    <span>
-      {language === "TypeScript"
-        ? "TS"
-        : language === "Python"
-          ? "Py"
-          : language === "CSS"
-            ? "#"
-            : "{ }"}
-    </span>
   );
 }

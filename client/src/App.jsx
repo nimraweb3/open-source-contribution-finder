@@ -10,10 +10,10 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { BookmarksProvider } from "./context/BookmarksContext";
 import { Navbar, Footer } from "./components/Layout";
 import { Button } from "./components/UI";
-import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Auth from "./pages/Auth";
-import Detail from "./pages/Detail";
+import { lazy, Suspense } from "react";
+const Detail = lazy(() => import("./pages/Detail"));
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 function Protected({ children }) {
@@ -39,15 +39,28 @@ export default function App() {
             <Navbar />
             <div id="content">
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Browse />} />
                 <Route path="/browse" element={<Browse />} />
                 <Route
                   path="/explore"
                   element={<Navigate to="/browse" replace />}
                 />
-                <Route path="/login" element={<Auth />} />
-                <Route path="/signup" element={<Auth signup />} />
-                <Route path="/issues/:id" element={<Detail />} />
+                <Route path="/login" element={<Auth key="login" />} />
+                <Route path="/signup" element={<Auth key="signup" signup />} />
+                <Route
+                  path="/issues/:id"
+                  element={
+                    <Suspense
+                      fallback={
+                        <main className="state" role="status">
+                          Loading issue…
+                        </main>
+                      }
+                    >
+                      <Detail />
+                    </Suspense>
+                  }
+                />
                 <Route
                   path="/dashboard"
                   element={
@@ -68,14 +81,10 @@ export default function App() {
                   path="*"
                   element={
                     <main className="container not-found">
-                      <div className="eyebrow">404 / A LITTLE OFF THE PATH</div>
-                      <h1>
-                        This branch
-                        <br />
-                        doesn’t exist<span>.</span>
-                      </h1>
-                      <p>There’s still plenty of good work waiting for you.</p>
-                      <Button to="/browse">Find your way back ↗</Button>
+                      <div className="eyebrow">404</div>
+                      <h1>Page not found</h1>
+                      <p>The page may have moved, or the link is incorrect.</p>
+                      <Button to="/">Browse issues</Button>
                     </main>
                   }
                 />
