@@ -8,6 +8,7 @@ process.env.JWT_REFRESH_SECRET =
 process.env.CLIENT_URL = "http://localhost:5173";
 const { app } = await import("./app.js");
 const { Issue, User, Contribution } = await import("./models/index.js");
+const { discover, buildSearch } = await import("./services/discovery.js");
 test("authentication, refresh rotation, filtering, ownership, and contribution lifecycle", async () => {
   const mongo = await MongoMemoryServer.create({
     binary: { version: "7.0.14" },
@@ -34,6 +35,62 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     };
   }
   try {
+    const searchParams = buildSearch({
+      q: "facebook/react",
+      label: "good first issue",
+      language: "TypeScript",
+      unassigned: "true",
+      page: "900",
+    });
+    assert.match(searchParams.get("q"), /is:open.*is:public/);
+    assert.match(searchParams.get("q"), /repo:facebook\/react/);
+    assert.match(searchParams.get("q"), /no:assignee/);
+    assert.equal(searchParams.get("page"), "50");
+    let calls = 0;
+    const fakeGithub = async () => {
+      calls++;
+      return {
+        ok: true,
+        json: async () => ({
+          total_count: 1,
+          incomplete_results: false,
+          items: [
+            {
+              id: 1234,
+              number: 7,
+              title: "Real-shaped GitHub fixture",
+              repository_url: "https://api.github.com/repos/test/repository",
+              labels: [{ name: "good first issue" }],
+              body: "An issue description",
+              html_url: "https://github.com/test/repository/issues/7",
+              comments: 2,
+              state: "open",
+              updated_at: "2026-09-27T12:00:00Z",
+              user: { login: "maintainer" },
+              assignees: [],
+            },
+          ],
+        }),
+      };
+    };
+    const [live, duplicate] = await Promise.all([
+      discover({ q: "integration-fixture" }, fakeGithub),
+      discover({ q: "integration-fixture" }, fakeGithub),
+    ]);
+    assert.equal(calls, 1);
+    assert.equal(live.issues[0].source, "github");
+    assert.equal(String(live.issues[0]._id), String(duplicate.issues[0]._id));
+    assert.equal(
+      live.issues[0].url,
+      "https://github.com/test/repository/issues/7",
+    );
+    await assert.rejects(
+      discover({ q: "rate-limit-fixture" }, async () => ({
+        ok: false,
+        status: 429,
+      })),
+      (error) => error.status === 503 && error.message.includes("search limit"),
+    );
     const issue = await Issue.create({
       title: "Improve docs",
       repository: "test/react",

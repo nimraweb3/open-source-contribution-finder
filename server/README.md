@@ -25,6 +25,8 @@ npm run dev
 
 ## API
 
+`GET /api/discover` searches real public open GitHub issues. Parameters: `q` (keywords or `owner/repository`), `language`, `label`, `unassigned=true`, `sort` (`updated`, `created`, `comments`), and `page`. Responses contain `issues`, `total`, `pages`, `page`, `incomplete`, and `fetchedAt`. Pages contain up to 20 issues, with GitHub's 1,000-result cap. Results are cached for 60 seconds and persisted for bookmarks and details. Set an optional server-side `GITHUB_TOKEN` for higher rate limits. No demo fallback is used on network/rate-limit errors. The older `/api/issues` endpoint below serves the local development dataset.
+
 | Method      | Path                     | Purpose                                             |
 | ----------- | ------------------------ | --------------------------------------------------- |
 | POST        | `/api/auth/signup`       | Register and start a session                        |
