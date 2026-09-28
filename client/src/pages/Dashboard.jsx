@@ -8,13 +8,11 @@ import {
   CheckCircle2,
   Code2,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
 import { useBookmarks } from "../context/BookmarksContext";
 import { api } from "../services/api";
 import { Button, LoadState } from "../components/UI";
 export default function Dashboard() {
-  const { user } = useAuth();
   const { mark } = useBookmarks();
   const { data, loading, error, reload } = useApi("/contributions");
   const [actionError, setActionError] = useState("");
@@ -37,14 +35,10 @@ export default function Dashboard() {
   }
   return (
     <main className="container page">
-      <div className="section-kicker">YOUR PERSONAL WORKSPACE</div>
       <div className="section-heading">
-        <h1 className="page-title">
-          Hey, {user.name.split(" ")[0]}.<br />
-          <span>Make your next move.</span>
-        </h1>
+        <h1 className="page-title">My contributions</h1>
         <Button to="/browse">
-          Find an opportunity <ArrowUpRight size={17} />
+          Find issues <ArrowUpRight size={17} />
         </Button>
       </div>
       <div className="dashboard-stats">
@@ -85,7 +79,9 @@ export default function Dashboard() {
                         <ArrowUpRight size={16} />
                       </Link>
                       <span>
-                        {item.issue.language} · {item.issue.difficulty}
+                        {item.issue.source === "github"
+                          ? `#${item.issue.number}`
+                          : "Sample listing"}
                       </span>
                     </div>
                     <select
@@ -115,10 +111,10 @@ export default function Dashboard() {
         ) : (
           <div className="state">
             <Bookmark size={34} />
-            <h3>A fresh start. Endless possibilities.</h3>
-            <p>Save an issue to begin your contribution journey.</p>
+            <h3>No saved issues yet</h3>
+            <p>Browse open issues and save the ones you want to work on.</p>
             <Button to="/browse">
-              Explore opportunities <ArrowUpRight size={16} />
+              Browse issues <ArrowUpRight size={16} />
             </Button>
           </div>
         ))}

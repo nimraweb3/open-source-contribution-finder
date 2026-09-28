@@ -23,7 +23,15 @@ export function Arrow({ size = 18 }) {
   return <ArrowUpRight size={size} aria-hidden="true" />;
 }
 export function Badge({ children }) {
-  return <span className="badge">{children}</span>;
+  const tone =
+    children === "good first issue"
+      ? "good-first"
+      : children === "help wanted"
+        ? "help-wanted"
+        : children === "bug"
+          ? "bug"
+          : "";
+  return <span className={`badge ${tone}`}>{children}</span>;
 }
 export function Field({ label, ...props }) {
   return (
@@ -49,7 +57,7 @@ export function Reveal({ children, className = "" }) {
 export function LoadState({ loading, error, retry }) {
   return loading ? (
     <div className="state" role="status">
-      <LoaderCircle className="spin" /> Loading opportunities…
+      <LoaderCircle className="spin" /> Loading…
     </div>
   ) : error ? (
     <div className="state error" role="alert">

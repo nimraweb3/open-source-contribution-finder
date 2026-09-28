@@ -3,7 +3,11 @@ import rateLimit from "express-rate-limit";
 import * as users from "../controllers/auth.js";
 import * as issues from "../controllers/issues.js";
 import { auth } from "../middleware/auth.js";
+import { discover } from "../services/discovery.js";
 export const router = Router();
+router.get("/discover", async (req, res) => {
+  res.json(await discover(req.query));
+});
 const limiter = rateLimit({
   windowMs: 15 * 60000,
   limit: 30,

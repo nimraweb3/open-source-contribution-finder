@@ -30,6 +30,8 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", router);
 app.use((req, res) => res.status(404).json({ message: "Endpoint not found." }));
 app.use((error, req, res, _next) => {
+  if ([400, 503].includes(error.status))
+    return res.status(error.status).json({ message: error.message });
   console.error(error.message);
   const status =
     error.code === 11000

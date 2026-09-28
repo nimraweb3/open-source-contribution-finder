@@ -1,13 +1,16 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { ArrowLeft, GitFork, Bookmark, Star, ExternalLink } from "lucide-react";
+import { ArrowLeft, GitFork, Bookmark, ExternalLink } from "lucide-react";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 import { useBookmarks } from "../context/BookmarksContext";
 import { api } from "../services/api";
 import { Button, Badge, LoadState } from "../components/UI";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 export default function Detail() {
   const { id } = useParams();
+  const location = useLocation();
   const { mark } = useBookmarks();
   const { data: issue, loading, error, reload } = useApi(`/issues/${id}`);
   const { user } = useAuth();
@@ -29,8 +32,8 @@ export default function Detail() {
   }
   return (
     <main className="container page">
-      <Link className="text-link" to="/browse">
-        <ArrowLeft size={16} /> Back to opportunities
+      <Link className="text-link" to={location.state?.from || "/"}>
+        <ArrowLeft size={16} /> Back to issues
       </Link>
       <LoadState loading={loading} error={error} retry={reload} />
       {issue && !loading && !error && (
@@ -47,9 +50,24 @@ export default function Detail() {
               ))}
             </div>
             <div className="detail-description">
-              {issue.description.split("\n\n").map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
+              <ReactMarkdown
+                skipHtml
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  img: ({ src, alt }) => (
+                    <a href={src} target="_blank" rel="noreferrer">
+                      {alt || "View attached image"}
+                    </a>
+                  ),
+                }}
+              >
+                {issue.description}
+              </ReactMarkdown>
             </div>
             <h2>Before you start</h2>
             <ul className="checklist">
@@ -60,37 +78,41 @@ export default function Detail() {
             </ul>
           </article>
           <aside className="detail-aside">
-            <span className="section-kicker">YOUR NEXT CONTRIBUTION</span>
+            <span className="section-kicker">Issue details</span>
             <dl>
               <div>
-                <dt>Language</dt>
-                <dd>{issue.language}</dd>
-              </div>
-              <div>
-                <dt>Difficulty</dt>
-                <dd>{issue.difficulty}</dd>
-              </div>
-              <div>
-                <dt>Repository stars</dt>
+                <dt>Source</dt>
                 <dd>
-                  <Star size={14} /> {issue.stars.toLocaleString()}
+                  {issue.source === "github" ? "GitHub" : "Sample listing"}
                 </dd>
               </div>
+              <div>
+                <dt>Assignment</dt>
+                <dd>{issue.assigned ? "Assigned" : "Unassigned"}</dd>
+              </div>
+              <div>
+                <dt>Comments</dt>
+                <dd>{issue.comments || 0}</dd>
+              </div>
             </dl>
-            <Button disabled={busy} onClick={save}>
+            <Button variant="secondary" disabled={busy} onClick={save}>
               <Bookmark size={17} />
-              {busy ? "Saving…" : "Save opportunity"}
+              {busy ? "Saving…" : "Save for later"}
             </Button>
             <a
-              className="button secondary"
+              className="button primary"
               href={issue.url}
               target="_blank"
               rel="noreferrer"
             >
-              View repository issues <ExternalLink size={15} />
+              Open on GitHub <ExternalLink size={15} />
             </a>
             {message && <p role="status">{message}</p>}
-            <small>Sample listing. Confirm availability on GitHub.</small>
+            <small>
+              {issue.source === "github"
+                ? "Details reflect the last search. Check GitHub for the latest status and discussion."
+                : "This is an old demo listing, not a live issue."}
+            </small>
           </aside>
         </div>
       )}

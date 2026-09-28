@@ -50,12 +50,9 @@ export default function Profile() {
   }
   return (
     <main className="container page profile-page">
-      <div className="section-kicker">MAKE YOURSELF AT HOME</div>
-      <h1 className="page-title">
-        Your profile<span>.</span>
-      </h1>
+      <h1 className="page-title">Profile settings</h1>
       <p className="page-description">
-        A little about you. A better place to start.
+        Update your name, languages, and interests.
       </p>
       <form className="profile-form" onSubmit={submit}>
         <Field

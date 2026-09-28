@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button, Field, Arrow } from "../components/UI";
-import { GitPullRequest } from "lucide-react";
 export default function Auth({ signup = false }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const { authenticate } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
@@ -17,7 +17,7 @@ export default function Auth({ signup = false }) {
         signup ? "signup" : "login",
         Object.fromEntries(new FormData(e.currentTarget)),
       );
-      navigate("/dashboard");
+      navigate(location.state?.from || "/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -26,34 +26,9 @@ export default function Auth({ signup = false }) {
   }
   return (
     <main className="container auth-page">
-      <div className="auth-story">
-        <div className="eyebrow">
-          <span className="live-dot" /> YOUR NEXT CHAPTER
-        </div>
-        <h1>
-          Big things.
-          <br />
-          Small commits.
-          <br />
-          <span>You.</span>
-        </h1>
-        <p>
-          A little curiosity is all it takes to get started.
-          <br />
-          Let’s build something that matters.
-        </p>
-        <GitPullRequest className="auth-art" size={130} strokeWidth={1} />
-      </div>
       <div className="auth-card">
-        <span className="section-kicker">
-          {signup ? "LET’S GET YOU STARTED" : "GOOD TO SEE YOU AGAIN"}
-        </span>
-        <h2>{signup ? "Make your mark." : "Welcome back."}</h2>
-        <p>
-          {signup
-            ? "Your first contribution is waiting."
-            : "Pick up where you left off."}
-        </p>
+        <h1>{signup ? "Create an account" : "Sign in"}</h1>
+        <p>Save issues and keep track of what you’re working on.</p>
         <form onSubmit={submit}>
           {signup && (
             <Field
@@ -94,7 +69,7 @@ export default function Auth({ signup = false }) {
           </Button>
         </form>
         <p className="auth-switch">
-          {signup ? "Already part of the community?" : "New around here?"}{" "}
+          {signup ? "Already have an account?" : "Don’t have an account?"}{" "}
           <Link to={signup ? "/login" : "/signup"}>
             {signup ? "Log in" : "Create an account"} <span>↗</span>
           </Link>
