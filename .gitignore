@@ -29,3 +29,6 @@ server/.env
 .demo-db/
 server/.demo-db/
 server/dist-api/
+.env.*
+!.env.example
+.vercel/

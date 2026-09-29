@@ -71,4 +71,10 @@ The main page calls `/api/discover` for real GitHub issues; it never substitutes
 
 The seed script and `/api/issues` retain the earlier demo data for development, separate from the live discovery feed. Maintainer publishing and email alerts are not included. Profile interests are stored; automated matching is not implemented.
 
-For deployment, configure strong secrets and a managed MongoDB database, serve the frontend and API under the same site using HTTPS, and configure SPA fallback routing. Do not use the development database runner in production.
+For deployment, configure strong secrets and a managed MongoDB database and serve the frontend and API under the same site using HTTPS. The supplied Vercel routing serves pre-rendered public pages, keeps account/issue routes private from indexing, and returns 404 for unknown paths. Do not use the development database runner in production.
+
+## Security and search visibility
+
+See [security review](SECURITY_REVIEW.md) for the audit scope, fixes, regression coverage, and remaining deployment checks. Logout now invalidates access tokens immediately; existing sessions need to sign in again after this update.
+
+Run `npm run build` from the repository root with Node.js 24 to generate crawlable HTML for 12 public routes, plus metadata, `robots.txt`, and `sitemap.xml`. Set `VITE_SITE_URL` to your final HTTPS origin for production. Local and preview builds are excluded from indexing. The contribution guide is linked in the footer. Follow [deployment and indexing setup](VERCEL_DEPLOYMENT.md) before publishing; SEO improves discoverability but cannot guarantee rankings.

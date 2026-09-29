@@ -18,6 +18,8 @@ The authentication flow creates a separate application account for each new veri
 | `CLIENT_URL` | `https://YOUR-SITE.vercel.app` (no trailing slash) |
 | `API_URL` | The same production origin as `CLIENT_URL` |
 | `VITE_API_URL` | `/api` |
+| `VITE_SITE_URL` | The public HTTPS origin, matching `CLIENT_URL`; used for canonicals and sitemap |
+| `VITE_NOINDEX` | `false` for production; `true` for staging |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Production GitHub OAuth app credentials |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Production Google web OAuth client credentials |
 | `GITHUB_TOKEN` | Optional server-side token for higher search limits |
@@ -54,6 +56,16 @@ Basic identity-only scopes have different testing restrictions from sensitive AP
 
 Vercel preview deployments have different URLs: do not share production OAuth credentials with arbitrary previews. Test OAuth on the stable production domain, or configure a separate staging domain and separate provider apps.
 
-Connection pools and search caches are reused within a warm function. The existing in-memory rate limiter is per function instance; add a shared rate-limit store or Vercel firewall rules before higher-traffic production use.
+Connection pools and search caches are reused within a warm function. Rate limits are stored in MongoDB and shared across instances: 240 API requests/minute, 20 discovery requests/minute, 30 sign-in/OAuth attempts/15 minutes, and 60 refreshes/minute per IP prefix. MongoDB TTL indexes expire counters. Keep automatic index creation enabled or create the declared indexes before deployment. Rate limiting fails closed if its database is unavailable. Use hosting firewall controls for volumetric attacks; application limits do not replace them.
+
+The supplied Vercel CSP assumes same-origin `/api` hosting. If you host the API elsewhere, configure its exact HTTPS origin in `connect-src` and review cookie/origin settings. Do not broaden the policy to allow arbitrary origins. Standalone Express does not trust forwarded IP headers; only the Vercel adapter enables one trusted proxy hop.
+
+## Search indexing after deployment
+
+The root build pre-renders the browse pages, contribution guide, GSoC directory, and organization pages. Public HTML has titles, descriptions, social metadata, and canonical links before JavaScript runs. `/browse` canonicalizes to `/` because they show the same search tool. Issue details and account pages are excluded from indexing; unknown routes return HTTP 404 on Vercel.
+
+Production builds require `VITE_SITE_URL`. Without it, local builds are deliberately noindex and their robots file disallows crawling. Vercel previews are noindex even when a production URL is configured. Do not put localhost or a preview hostname in the production setting.
+
+After publishing, verify `/robots.txt`, `/sitemap.xml`, and the HTML source on the real domain. Register that domain in Google Search Console, submit `/sitemap.xml`, and inspect the homepage and guide. Check HTTPS redirects and the HTTP 404 status for an unknown route. Search-engine indexing and ranking are not guaranteed; maintain accurate, useful content and obtain relevant links naturally. See [Google's JavaScript SEO guidance](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics).
 
 This setup is prepared in code. A successful local build does not prove the hosted deployment or provider configuration works; complete the production checks above after deployment.
