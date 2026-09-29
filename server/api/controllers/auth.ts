@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { User } from "../models/index.js";
 import {
   session,
   hash,
   publicUser,
   cookieOptions,
+  verifyToken,
 } from "../services/tokens.js";
 export async function signup(req: Request, res: Response) {
   const { name, email, password } = req.body;
@@ -14,6 +14,7 @@ export async function signup(req: Request, res: Response) {
     typeof name !== "string" ||
     !name.trim() ||
     typeof email !== "string" ||
+    email.length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
     typeof password !== "string" ||
     password.length < 10 ||
@@ -32,9 +33,18 @@ export async function signup(req: Request, res: Response) {
 }
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
+  if (
+    typeof email !== "string" ||
+    email.length > 254 ||
+    typeof password !== "string" ||
+    Buffer.byteLength(password, "utf8") > 72
+  )
+    return res.status(401).json({ message: "Email or password is incorrect." });
   const user =
     typeof email === "string"
-      ? await User.findOne({ email: email.toLowerCase().trim() })
+      ? await User.findOne({ email: email.toLowerCase().trim() }).select(
+          "+password",
+        )
       : null;
   if (
     !user ||
@@ -48,17 +58,17 @@ export async function login(req: Request, res: Response) {
 export async function refresh(req: Request, res: Response) {
   try {
     const token = req.cookies.refresh;
-    const payload = jwt.verify(
-      token,
-      process.env.JWT_REFRESH_SECRET!,
-    ) as jwt.JwtPayload;
-    const user = await User.findOneAndUpdate(
-      { _id: payload.sub, refreshHash: hash(token) },
-      { $unset: { refreshHash: 1 } },
-      { returnDocument: "after" },
-    );
+    const payload = verifyToken(token, "refresh");
+    const user = await User.findOne({
+      _id: payload.sub,
+      refreshHash: hash(token),
+      sessionId: payload.sid,
+    });
     if (!user) throw new Error();
-    await session(user, res);
+    await session(user, res, undefined, {
+      hash: hash(token),
+      sid: payload.sid,
+    });
   } catch {
     res
       .status(401)
@@ -66,11 +76,19 @@ export async function refresh(req: Request, res: Response) {
   }
 }
 export async function logout(req: Request, res: Response) {
-  if (req.cookies.refresh)
+  let payload;
+  try {
+    // The signed session ID also revokes a session if its cookie rotated in another tab.
+    payload = verifyToken(req.cookies.refresh, "refresh");
+  } catch {
+    /* Invalid or expired cookies are cleared as well. */
+  }
+  if (payload) {
     await User.updateOne(
-      { refreshHash: hash(req.cookies.refresh) },
-      { $unset: { refreshHash: 1 } },
+      { _id: payload.sub, sessionId: payload.sid },
+      { $unset: { refreshHash: 1, sessionId: 1 } },
     );
+  }
   res.clearCookie("refresh", cookieOptions).json({ message: "Signed out." });
 }
 export async function profile(req: Request, res: Response) {

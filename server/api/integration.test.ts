@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 process.env.JWT_SECRET = "test-only-access-secret-with-sufficient-length";
 process.env.JWT_REFRESH_SECRET =
   "test-only-refresh-secret-with-sufficient-length";
@@ -9,6 +10,7 @@ process.env.CLIENT_URL = "http://localhost:5173";
 const { app } = await import("./app.js");
 const { Issue, User, Contribution } = await import("./models/index.js");
 const { discover, buildSearch } = await import("./services/discovery.js");
+const { safeReturn } = await import("./controllers/oauth.js");
 test("authentication, refresh rotation, filtering, ownership, and contribution lifecycle", async () => {
   const mongo = await MongoMemoryServer.create({
     binary: { version: "7.0.14" },
@@ -35,6 +37,9 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     };
   }
   try {
+    for (const path of ["//evil.test", "/%2fevil.test", "/%5cevil.test", "/auth/complete", "/%0d%0aevil"])
+      assert.equal(safeReturn(path), "/dashboard");
+    assert.equal(safeReturn("/browse?languages=C%2B%2B"), "/browse?languages=C%2B%2B");
     assert.match(
       buildSearch({ languages: "C++,C#,Solidity,Move" }).get("q"),
       /language:"C\+\+" language:"C#" language:"Solidity" language:"Move"/,
@@ -197,6 +202,32 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     assert.ok(signup.cookie);
     assert.equal(signup.body.user.password, undefined);
     const token = signup.body.accessToken;
+    const profileHeaders = await fetch(base + "/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(profileHeaders.headers.get("cache-control"), "no-store");
+    assert.equal(
+      profileHeaders.headers.get("x-robots-tag"),
+      "noindex, nofollow",
+    );
+    const forged = jwt.sign(
+      { sub: signup.body.user.id },
+      process.env.JWT_SECRET!,
+    );
+    assert.equal((await request("/profile", "GET", null, forged)).status, 401);
+    const crossSite = await fetch(base + "/auth/logout", {
+      method: "POST",
+      headers: { Origin: "https://evil.example" },
+    });
+    assert.equal(crossSite.status, 403);
+    const fetchMetadata = await fetch(base + "/auth/logout", { method: "POST", headers: { "Sec-Fetch-Site": "cross-site" } });
+    assert.equal(fetchMetadata.status, 403);
+    const oversized = await fetch(base + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: "a".repeat(40000) }),
+    });
+    assert.equal(oversized.status, 413);
     assert.equal(
       (
         await request("/auth/login", "POST", {
@@ -293,16 +324,40 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
         .status,
       401,
     );
+    await request(`/contributions/${issue.id}`, "DELETE", null, token);
+    assert.equal(
+      (await request("/contributions", "GET", null, token)).body.length,
+      0,
+    );
+    // Exactly one concurrent rotation may consume a refresh token.
+    const rotations = await Promise.all([
+      request("/auth/refresh", "POST", null, null, renewed.cookie),
+      request("/auth/refresh", "POST", null, null, renewed.cookie),
+    ]);
+    assert.deepEqual(rotations.map((r) => r.status).sort(), [200, 401]);
+    // Even a previously rotated cookie can revoke its own session.
     await request("/auth/logout", "POST", null, null, renewed.cookie);
     assert.equal(
       (await request("/auth/refresh", "POST", null, null, renewed.cookie))
         .status,
       401,
     );
-    await request(`/contributions/${issue.id}`, "DELETE", null, token);
+    assert.equal((await request("/profile", "GET", null, token)).status, 401);
+    const signedInAgain = await request("/auth/login", "POST", {
+      email: "tester@example.test", password: "testing-password-123",
+    });
+    assert.equal(signedInAgain.status, 200);
+    assert.equal((await request("/profile", "GET", null, signedInAgain.body.accessToken)).status, 200);
     assert.equal(
-      (await request("/contributions", "GET", null, token)).body.length,
-      0,
+      (
+        await request(
+          "/profile",
+          "GET",
+          null,
+          rotations.find((r) => r.status === 200).body.accessToken,
+        )
+      ).status,
+      401,
     );
 
     // Exercise the real OAuth handlers with an isolated provider fixture.
@@ -384,6 +439,13 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
       delete process.env.GITHUB_CLIENT_ID;
       delete process.env.GITHUB_CLIENT_SECRET;
     }
+    let limited;
+    for (let i = 0; i < 31; i++)
+      limited = await request("/auth/login", "POST", {
+        email: "none@example.test",
+        password: "wrong",
+      });
+    assert.equal(limited.status, 429);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     await mongoose.disconnect();

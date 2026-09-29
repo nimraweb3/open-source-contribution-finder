@@ -6,21 +6,40 @@ import cookieParser from "cookie-parser";
 import { router } from "./routes/index.js";
 import { connectDatabase } from "./services/database.js";
 export const app = express();
+app.disable("x-powered-by");
+app.use((_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  res.set("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
 if (process.env.VERCEL) {
   app.set("trust proxy", 1);
   app.use(async (_req, res, next) => {
     try {
       const access = process.env.JWT_SECRET || "";
       const refresh = process.env.JWT_REFRESH_SECRET || "";
-      if (access.length < 32 || refresh.length < 32 || access === refresh || access.startsWith("replace-") || refresh.startsWith("replace-")) throw new Error("Invalid production secrets");
+      if (
+        access.length < 32 ||
+        refresh.length < 32 ||
+        access === refresh ||
+        access.startsWith("replace-") ||
+        refresh.startsWith("replace-")
+      )
+        throw new Error("Invalid production secrets");
       for (const key of ["CLIENT_URL", "API_URL"]) {
         const url = new URL(process.env[key] || "");
-        if (url.protocol !== "https:" || url.origin !== process.env[key]) throw new Error("Invalid production origin");
+        if (url.protocol !== "https:" || url.origin !== process.env[key])
+          throw new Error("Invalid production origin");
       }
       await connectDatabase();
       next();
     } catch {
-      res.status(503).json({message: "The service is not ready. Check the deployment configuration and database connection."});
+      res
+        .status(503)
+        .json({
+          message:
+            "The service is not ready. Check the deployment configuration and database connection.",
+        });
     }
   });
 }
@@ -40,8 +59,10 @@ app.use(cookieParser());
 app.use((req, res, next) => {
   if (
     !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
-    req.headers.origin &&
-    req.headers.origin !== (process.env.CLIENT_URL || "http://localhost:5173")
+    ((req.headers.origin &&
+      req.headers.origin !==
+        (process.env.CLIENT_URL || "http://localhost:5173")) ||
+      (!req.headers.origin && req.headers["sec-fetch-site"] === "cross-site"))
   )
     return res.status(403).json({ message: "Origin not allowed." });
   next();
@@ -50,6 +71,8 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", router);
 app.use((req, res) => res.status(404).json({ message: "Endpoint not found." }));
 const handleError: ErrorRequestHandler = (error, req, res, _next) => {
+  if (error.type === "entity.too.large")
+    return res.status(413).json({ message: "Request body is too large." });
   if ([400, 503].includes(error.status))
     return res.status(error.status).json({ message: error.message });
   if (!error.code && !["ValidationError", "CastError"].includes(error.name))

@@ -4,6 +4,12 @@ import { ArrowLeft, ExternalLink, BookOpen, CircleDot } from "lucide-react";
 import { useApi } from "../hooks/useApi";
 import { Button, Badge, LoadState } from "../components/UI";
 import type { Organization, OrganizationResult } from "../types";
+import {
+  organizations,
+  directory,
+  verifiedAt,
+  findOrganization,
+} from "../../../server/api/services/organizations";
 
 export default function Gsoc() {
   const [params, setParams] = useSearchParams();
@@ -15,6 +21,9 @@ export default function Gsoc() {
   }, [params]);
   const { data, loading, error, reload } = useApi<OrganizationResult>(
     `/gsoc?${params}`,
+    params.size === 0
+      ? { organizations, directory, verifiedAt, year: 2026 }
+      : undefined,
   );
   return (
     <main className="container page gsoc-page">
@@ -108,7 +117,7 @@ export function GsocDetail() {
     loading,
     error,
     reload,
-  } = useApi<Organization>(`/gsoc/${id}`);
+  } = useApi<Organization>(`/gsoc/${id}`, findOrganization(id));
   return (
     <main className="container page gsoc-page">
       <Link to="/gsoc" className="text-link">
