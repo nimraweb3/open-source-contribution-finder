@@ -24,6 +24,8 @@ const cookie: CookieOptions = {
 export function safeReturn(value: unknown): string {
   return typeof value === "string" &&
     /^\/(?!\/)[\w/?=&%+.,#-]*$/.test(value) &&
+    value.length <= 1000 &&
+    !/%(?:2f|5c|0[ad])/i.test(value) &&
     !value.startsWith("/auth")
     ? value
     : "/dashboard";

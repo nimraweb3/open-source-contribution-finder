@@ -1721,3 +1721,8 @@ select,
     transition: none !important;
   }
 }
+/* Reading layout reuses the application's theme tokens and typography. */
+.contribution-guide article { max-width: 760px; margin-inline: auto; }
+.contribution-guide section { margin-block: 2rem; }
+.contribution-guide h2 { font-size: 1.2rem; margin-block: 1.5rem .75rem; }
+.contribution-guide p { line-height: 1.8; margin-block: .75rem; }

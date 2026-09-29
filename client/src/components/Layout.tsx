@@ -113,6 +113,7 @@ export function Footer() {
         find something to work on.
       </span>
       <div>
+        <Link to="/contribution-guide">Contribution guide</Link>
         <a href="https://github.com" target="_blank" rel="noreferrer">
           GitHub <ExternalLink size={12} />
         </a>
