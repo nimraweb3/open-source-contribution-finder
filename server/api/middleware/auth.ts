@@ -6,14 +6,16 @@ declare global {
     }
   }
 }
-import jwt from "jsonwebtoken";
-export function auth(req: Request, res: Response, next: NextFunction) {
+import { verifyToken } from "../services/tokens.js";
+import { User } from "../models/index.js";
+export async function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    const payload = jwt.verify(
+    const payload = verifyToken(
       req.headers.authorization?.replace(/^Bearer /, "") || "",
-      process.env.JWT_SECRET!,
-    ) as jwt.JwtPayload;
-    if (typeof payload.sub !== "string") throw new Error("Invalid subject");
+      "access",
+    );
+    if (!(await User.exists({ _id: payload.sub, sessionId: payload.sid })))
+      throw new Error("Session revoked");
     req.userId = payload.sub;
     next();
   } catch {

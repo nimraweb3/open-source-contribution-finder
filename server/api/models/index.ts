@@ -3,13 +3,14 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true },
-    password: String,
+    password: { type: String, select: false },
     googleId: { type: String, unique: true, sparse: true },
     githubId: { type: String, unique: true, sparse: true },
     avatar: String,
     techStack: [String],
     interests: [String],
-    refreshHash: String,
+    refreshHash: { type: String, select: false },
+    sessionId: { type: String, select: false },
   },
   { timestamps: true },
 );
