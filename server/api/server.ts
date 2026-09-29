@@ -17,6 +17,13 @@ if (
   throw new Error(
     "Production requires different, randomly generated JWT secrets of at least 32 characters.",
   );
+if (process.env.NODE_ENV === "production") {
+  for (const key of ["CLIENT_URL", "API_URL"]) {
+    const url = new URL(process.env[key] || "");
+    if (url.protocol !== "https:" || url.origin !== process.env[key])
+      throw new Error(`${key} must be an HTTPS origin in production.`);
+  }
+}
 await mongoose.connect(process.env.MONGODB_URI!);
 app.listen(process.env.PORT || 5000, () =>
   console.log(

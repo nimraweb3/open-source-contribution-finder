@@ -190,6 +190,11 @@ export function discover(input: SearchInput, fetcher: typeof fetch = fetch) {
   const key =
     buildSearch(input).toString() +
     JSON.stringify([input.category, input.technology]);
+  if (!inFlight.has(key) && inFlight.size >= 20)
+    throw Object.assign(
+      new Error("Search is busy. Please try again shortly."),
+      { status: 503 },
+    );
   if (!inFlight.has(key))
     inFlight.set(
       key,
@@ -322,6 +327,7 @@ async function scopedRepositories(
       }),
     );
     const repos = results.filter((r): r is string => Boolean(r));
+    if (repoCache.size >= 100) repoCache.delete(repoCache.keys().next().value!);
     repoCache.set(cacheKey, { repos, expires: Date.now() + 600000 });
     return repos;
   }

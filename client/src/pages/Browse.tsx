@@ -66,7 +66,7 @@ export default function Browse() {
         <div className="intro-note">
           <CircleDot size={16} /> Open source, one issue at a time.
         </div>
-        <h1>Find an issue. Start contributing.</h1>
+        <h1>Find your next open source contribution.</h1>
         <p>
           Search open GitHub issues by language, project, or topic.
           <br className="desktop-break" /> Find something you can help with,
