@@ -1,6 +1,7 @@
+import "dotenv/config";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { randomBytes } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 // Local development only: a real MongoDB process with data stored on disk.
 if (process.env.NODE_ENV === "production")
@@ -18,8 +19,24 @@ const mongo = await MongoMemoryServer.create({
   binary: { version: "7.0.14" },
 });
 process.env.MONGODB_URI = mongo.getUri("contribution-finder");
-process.env.JWT_SECRET = randomBytes(48).toString("hex");
-process.env.JWT_REFRESH_SECRET = randomBytes(48).toString("hex");
+const secretPath = resolve(dbPath, "session-secrets.json");
+let secrets: { access: string; refresh: string };
+try {
+  secrets = JSON.parse(await readFile(secretPath, "utf8"));
+} catch {
+  secrets = {
+    access: randomBytes(48).toString("hex"),
+    refresh: randomBytes(48).toString("hex"),
+  };
+  await writeFile(secretPath, JSON.stringify(secrets), { mode: 0o600 });
+}
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.startsWith("replace-"))
+  process.env.JWT_SECRET = secrets.access;
+if (
+  !process.env.JWT_REFRESH_SECRET ||
+  process.env.JWT_REFRESH_SECRET.startsWith("replace-")
+)
+  process.env.JWT_REFRESH_SECRET = secrets.refresh;
 process.env.PORT = process.env.PORT || "5000";
 process.env.CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 await import("./seed.js");

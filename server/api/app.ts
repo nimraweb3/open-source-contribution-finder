@@ -1,9 +1,29 @@
+import type { ErrorRequestHandler } from "express";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { router } from "./routes/index.js";
+import { connectDatabase } from "./services/database.js";
 export const app = express();
+if (process.env.VERCEL) {
+  app.set("trust proxy", 1);
+  app.use(async (_req, res, next) => {
+    try {
+      const access = process.env.JWT_SECRET || "";
+      const refresh = process.env.JWT_REFRESH_SECRET || "";
+      if (access.length < 32 || refresh.length < 32 || access === refresh || access.startsWith("replace-") || refresh.startsWith("replace-")) throw new Error("Invalid production secrets");
+      for (const key of ["CLIENT_URL", "API_URL"]) {
+        const url = new URL(process.env[key] || "");
+        if (url.protocol !== "https:" || url.origin !== process.env[key]) throw new Error("Invalid production origin");
+      }
+      await connectDatabase();
+      next();
+    } catch {
+      res.status(503).json({message: "The service is not ready. Check the deployment configuration and database connection."});
+    }
+  });
+}
 app.use(helmet());
 app.use(
   cors({
@@ -29,10 +49,11 @@ app.use((req, res, next) => {
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", router);
 app.use((req, res) => res.status(404).json({ message: "Endpoint not found." }));
-app.use((error, req, res, _next) => {
+const handleError: ErrorRequestHandler = (error, req, res, _next) => {
   if ([400, 503].includes(error.status))
     return res.status(error.status).json({ message: error.message });
-  console.error(error.message);
+  if (!error.code && !["ValidationError", "CastError"].includes(error.name))
+    console.error("API request failed:", error.name);
   const status =
     error.code === 11000
       ? 409
@@ -48,4 +69,5 @@ app.use((error, req, res, _next) => {
           ? "Invalid request data."
           : "Something went wrong. Please try again.",
   });
-});
+};
+app.use(handleError);

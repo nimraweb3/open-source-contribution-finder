@@ -35,6 +35,29 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     };
   }
   try {
+    assert.match(
+      buildSearch({ languages: "C++,C#,Solidity,Move" }).get("q"),
+      /language:"C\+\+" language:"C#" language:"Solidity" language:"Move"/,
+    );
+    assert.throws(() => buildSearch({ languages: 'Python" repo:evil' }));
+    assert.match(
+      buildSearch({ organization: "django" }).get("q"),
+      /repo:django\/django/,
+    );
+    const gsoc = await request("/gsoc?technology=Python");
+    assert.ok(gsoc.body.organizations.length > 0);
+    assert.ok(
+      gsoc.body.organizations.every((org) =>
+        org.technologies.includes("Python"),
+      ),
+    );
+    assert.equal((await request("/gsoc/no-such-org")).status, 404);
+    assert.equal(
+      (await request("/gsoc?q=no-such-name")).body.organizations.length,
+      0,
+    );
+    assert.equal((await request("/auth/providers")).body.google, false);
+
     const searchParams = buildSearch({
       q: "facebook/react",
       label: "good first issue",
@@ -91,6 +114,59 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
       })),
       (error) => error.status === 503 && error.message.includes("search limit"),
     );
+
+    const categoryUrls: string[] = [];
+    await discover(
+      { category: "web3", languages: "Solidity", label: "help wanted" },
+      async (url) => {
+        categoryUrls.push(String(url));
+        if (String(url).includes("/search/repositories?"))
+          return Response.json({
+            items: [
+              {
+                full_name: "fixture/contracts",
+                has_issues: true,
+                open_issues_count: 2,
+              },
+            ],
+          });
+        return Response.json({
+          total_count: 0,
+          items: [],
+          incomplete_results: false,
+        });
+      },
+    );
+    assert.match(
+      new URL(categoryUrls[0]).searchParams.get("q"),
+      /topic:blockchain/,
+    );
+    assert.match(
+      new URL(categoryUrls[0]).searchParams.get("q"),
+      /language:"Solidity"/,
+    );
+    assert.match(
+      new URL(categoryUrls[1]).searchParams.get("q"),
+      /repo:fixture\/contracts/,
+    );
+    assert.match(
+      new URL(categoryUrls[1]).searchParams.get("q"),
+      /label:"help wanted"/,
+    );
+    assert.throws(() =>
+      buildSearch({ organization: "sympy", q: "someone/else" }),
+    );
+    await assert.rejects(
+      discover({ category: "not-a-category" }),
+      /Unknown development category/,
+    );
+    const emptyScope = await discover(
+      { technology: "unique-nonexistent-fixture" },
+      async () => Response.json({ items: [] }),
+    );
+    assert.equal(emptyScope.total, 0);
+    assert.match(emptyScope.scopeNote, /0 repositories/);
+
     const issue = await Issue.create({
       title: "Improve docs",
       repository: "test/react",
@@ -228,6 +304,86 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
       (await request("/contributions", "GET", null, token)).body.length,
       0,
     );
+
+    // Exercise the real OAuth handlers with an isolated provider fixture.
+    process.env.GITHUB_CLIENT_ID = "test-client";
+    process.env.GITHUB_CLIENT_SECRET = "test-secret";
+    const begin = await fetch(
+      base + "/auth/oauth/github?returnTo=%2Fdashboard",
+      { redirect: "manual" },
+    );
+    assert.equal(begin.status, 302);
+    const authorize = new URL(begin.headers.get("location"));
+    assert.equal(authorize.hostname, "github.com");
+    assert.equal(authorize.searchParams.get("code_challenge_method"), "S256");
+    const state = authorize.searchParams.get("state");
+    const bindingCookie = begin.headers.get("set-cookie").split(";")[0];
+    const missingBinding = await fetch(
+      base + "/auth/oauth/github/callback?state=" + state + "&code=test-code",
+      { redirect: "manual" },
+    );
+    assert.match(missingBinding.headers.get("location"), /oauthError=expired/);
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      const address = String(url);
+      if (address === "https://github.com/login/oauth/access_token")
+        return Response.json({ access_token: "fixture-token" });
+      if (address === "https://api.github.com/user")
+        return Response.json({
+          id: 987654,
+          login: "oauth-contributor",
+          avatar_url: "https://avatars.githubusercontent.com/u/987654",
+        });
+      if (address === "https://api.github.com/user/emails")
+        return Response.json([
+          { email: "oauth@example.test", primary: true, verified: true },
+        ]);
+      return originalFetch(url, options);
+    };
+    try {
+      const callbackPath =
+        base + "/auth/oauth/github/callback?state=" + state + "&code=test-code";
+      const completed = await fetch(callbackPath, {
+        headers: { Cookie: bindingCookie },
+        redirect: "manual",
+      });
+      assert.equal(completed.status, 302);
+      assert.match(completed.headers.get("location"), /auth\/complete/);
+      assert.ok(!completed.headers.get("location").includes("token"));
+      const refreshCookie = completed.headers
+        .getSetCookie()
+        .find((c) => c.startsWith("refresh="))
+        .split(";")[0];
+      const oauthSession = await request(
+        "/auth/refresh",
+        "POST",
+        null,
+        null,
+        refreshCookie,
+      );
+      assert.equal(oauthSession.status, 200);
+      assert.equal(oauthSession.body.user.name, "oauth-contributor");
+      assert.ok(oauthSession.body.user.avatar);
+      assert.equal(oauthSession.body.user.githubId, undefined);
+      const replay = await fetch(callbackPath, {
+        headers: { Cookie: bindingCookie },
+        redirect: "manual",
+      });
+      assert.match(replay.headers.get("location"), /oauthError=expired/);
+      assert.equal(
+        (
+          await request("/auth/login", "POST", {
+            email: "oauth@example.test",
+            password: "anything",
+          })
+        ).status,
+        401,
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.GITHUB_CLIENT_ID;
+      delete process.env.GITHUB_CLIENT_SECRET;
+    }
   } finally {
     await new Promise((resolve) => server.close(resolve));
     await mongoose.disconnect();
