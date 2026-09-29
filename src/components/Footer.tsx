@@ -20,7 +20,7 @@ const Footer = () => {
           </Link>
 
           <a
-            href="https://github.com"
+            href="https://github.com/nimraweb3/open-source-contribution-finder"
             target="_blank"
             rel="noreferrer"
             className="transition-colors hover:text-zinc-900"
