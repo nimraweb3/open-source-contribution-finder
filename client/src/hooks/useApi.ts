@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
-export function useApi<T>(path: string) {
-  const [data, setData] = useState<T | null>(null);
+export function useApi<T>(path: string, initialData?: T) {
+  const [data, setData] = useState<T | null>(initialData ?? null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;

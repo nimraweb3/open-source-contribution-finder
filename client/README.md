@@ -16,6 +16,6 @@ npm run build
 npm run preview
 ```
 
-The build is written to the repository's `dist/`. Configure your host to serve `index.html` for client routes. The API and client should use the same site in production for the strict refresh cookie. System fonts are used without an external font request.
+The production build delegates to the root build, so first install dependencies at the repository root. It writes to `dist/` and pre-renders public routes. Set `VITE_SITE_URL` to the final HTTPS origin to generate canonical links and an indexable sitemap. Without that setting, builds are deliberately noindex. Use the supplied Vercel routing or equivalent static-file routing, a private SPA fallback for account/issue routes, and a genuine 404 fallback. See `VERCEL_DEPLOYMENT.md`. The API and client should use the same site in production for the strict refresh cookie. System fonts are used without an external font request.
 
 Pages: issue search (home and browse), issue detail, login, signup, protected dashboard, protected profile, GSoC organizations and details, OAuth completion, and 404. Search and filters are encoded in the URL. Access tokens stay in memory; refresh tokens are HttpOnly cookies. The navbar theme toggle persists its selection in localStorage; dark is the default. Language, category and organization filters are shareable through the URL. OAuth buttons load real provider availability from the API; see `server/OAUTH_SETUP.md` for credentials. The UI uses system fonts and a restrained GitHub-inspired palette.
