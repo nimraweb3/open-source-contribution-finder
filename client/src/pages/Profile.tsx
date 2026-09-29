@@ -1,0 +1,104 @@
+import type { FormEvent } from "react";
+import type { User } from "../types";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../services/api";
+import { Button, Field } from "../components/UI";
+export default function Profile() {
+  const { user, setUser, logout } = useAuth();
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setMessage("");
+    const values = Object.fromEntries(new FormData(e.currentTarget));
+    try {
+      setUser(
+        await api<User>("/profile", {
+          method: "PATCH",
+          body: {
+            name: values.name,
+            techStack: String(values.techStack)
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean),
+            interests: String(values.interests)
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean),
+          },
+        }),
+      );
+      setMessage("Your profile has been updated.");
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function signout() {
+    setBusy(true);
+    try {
+      await logout();
+      navigate("/");
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!user) return null;
+  return (
+    <main className="container page profile-page">
+      <h1 className="page-title">Profile settings</h1>
+      <p className="page-description">
+        Update your name, languages, and interests.
+      </p>
+      <form className="profile-form" onSubmit={submit}>
+        <Field
+          label="Your name"
+          name="name"
+          defaultValue={user.name}
+          maxLength={80}
+          required
+        />
+        <Field label="Email address" value={user.email} disabled />
+        <Field
+          label="Tech stack (comma separated)"
+          name="techStack"
+          defaultValue={user.techStack?.join(", ")}
+          placeholder="React, TypeScript, Python"
+        />
+        <Field
+          label="Interests (comma separated)"
+          name="interests"
+          defaultValue={user.interests?.join(", ")}
+          placeholder="Accessibility, developer tools, climate"
+        />
+        {message && <p role="status">{message}</p>}
+        <div className="form-actions">
+          <Button disabled={busy}>Save changes</Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            onClick={signout}
+          >
+            Log out
+          </Button>
+        </div>
+      </form>
+    </main>
+  );
+}
