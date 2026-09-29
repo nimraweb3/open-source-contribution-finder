@@ -1,3 +1,6 @@
+import { useBookmarks } from "../context/BookmarksContext";
+import { useTheme } from "../context/ThemeContext";
+import { Sun, Moon, GraduationCap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { CircleDot, Bookmark, Menu, X, ExternalLink } from "lucide-react";
@@ -17,13 +20,14 @@ export function Logo() {
 export function Navbar() {
   const [mobile, setMobile] = useState(false);
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
   const location = useLocation();
   useEffect(() => {
     setMobile(false);
     window.scrollTo(0, 0);
   }, [location.pathname]);
   useEffect(() => {
-    const close = (event) => {
+    const close = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobile(false);
     };
     window.addEventListener("keydown", close);
@@ -49,18 +53,34 @@ export function Navbar() {
           <NavLink to="/dashboard">
             <Bookmark size={16} /> My contributions
           </NavLink>
-          <a
-            href="https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Contributing guide <ExternalLink size={13} />
-          </a>
+          <NavLink to="/gsoc">
+            <GraduationCap size={16} /> GSoC organizations
+          </NavLink>
         </nav>
         <div className="nav-actions">
+          <button
+            className="icon-button theme-toggle"
+            onClick={toggle}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {user ? (
             <Button to="/profile" variant="secondary">
-              {user.name.split(" ")[0]}
+              {user.avatar ? (
+                <img
+                  className="avatar"
+                  src={user.avatar}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span className="avatar avatar-fallback" aria-hidden="true">
+                  {user.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className="profile-name">{user.name.split(" ")[0]}</span>
             </Button>
           ) : (
             <>
@@ -100,4 +120,26 @@ export function Footer() {
       </div>
     </footer>
   );
+}
+
+export function BookmarkNotice() {
+  const { error, retry } = useBookmarks();
+  const { sessionError, retrySession } = useAuth();
+  if (sessionError)
+    return (
+      <div className="container scope-note" role="alert">
+        {sessionError}{" "}
+        <button className="text-link" onClick={retrySession}>
+          Retry session
+        </button>
+      </div>
+    );
+  return error ? (
+    <div className="container scope-note" role="alert">
+      {error}{" "}
+      <button className="text-link" onClick={retry}>
+        Retry
+      </button>
+    </div>
+  ) : null;
 }
