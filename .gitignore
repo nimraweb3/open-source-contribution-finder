@@ -28,3 +28,4 @@ server/.env
 
 .demo-db/
 server/.demo-db/
+server/dist-api/
