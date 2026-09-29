@@ -4,7 +4,7 @@ import { Issue } from "./models/index.js";
 await mongoose.connect(
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/contribution-finder",
 );
-const samples = [
+const samples: [string, string, string, number, string][] = [
   [
     "facebook/react",
     "Improve error messages for invalid hook calls",
