@@ -1,6 +1,6 @@
 # Contribution-Finder
 
-A MERN application for finding real open GitHub issues and tracking contributions from saved to merged. The homepage is the search tool: a GitHub-inspired dark interface with language and label filters, compact issue rows, and direct links to work on GitHub. No testimonials, marketing sections, or invented activity statistics.
+A MERN application for finding real open GitHub issues and tracking contributions from saved to merged. The homepage is the search tool: a GitHub-inspired light and dark interface with language and label filters, compact issue rows, and direct links to work on GitHub. No testimonials, marketing sections, or invented activity statistics.
 
 ## Quick demo
 
@@ -36,8 +36,8 @@ server/api/
   middleware/    JWT verification
   routes/        REST endpoints and auth rate limiting
   services/      token issuance and serialization
-  seed.js        idempotent sample data
-  demo.js        local MongoDB development runner
+  seed.ts        idempotent sample data
+  demo.ts        local MongoDB development runner
 ```
 
 The original root `src/` and `server/src/` are retained to preserve pre-existing work. Root development/build scripts now target `client/`; server start scripts target `server/api/`.
@@ -46,9 +46,18 @@ The original root `src/` and `server/src/` are retained to preserve pre-existing
 
 ```sh
 npm run build
+npm run typecheck
 npm run lint:app
 npm run test:api --prefix server
 ```
+
+## New discovery features
+
+- Google and GitHub authorization-code sign-in. Register your provider apps using [OAuth setup](server/OAUTH_SETUP.md); provider buttons remain disabled until credentials are configured. Email/password accounts work immediately.
+- Select up to eight languages together, including custom language names. Matches use GitHub language qualifiers; languages must be recognized by GitHub Linguist. Use the separate technology/framework field for tools such as React or Ethereum.
+- Web, Web3, Android/mobile, and AI categories search repository topics and then their live issues. To keep GitHub queries bounded, each category/technology search selects up to six popular, non-archived repositories with open issues; this scope is displayed above results. It is not an exhaustive category index. Selected languages also filter repository selection.
+- GSoC search, technology filtering, organization details, official links, selected repositories, and issue discovery for eight curated 2026 organizations. The official directory link provides the complete program list. Django’s separate issue tracker is linked directly.
+- A persisted theme toggle and profile avatars. Active frontend and backend application code is now strict TypeScript/TSX.
 
 ## Included
 

@@ -1,6 +1,6 @@
 # Contribution-Finder client
 
-React + Vite, React Router, Tailwind CSS, Framer Motion, and React Context.
+React + TypeScript/TSX + Vite, React Router, Tailwind CSS, Framer Motion, and React Context.
 
 From this directory:
 
@@ -18,4 +18,4 @@ npm run preview
 
 The build is written to the repository's `dist/`. Configure your host to serve `index.html` for client routes. The API and client should use the same site in production for the strict refresh cookie. System fonts are used without an external font request.
 
-Pages: issue search (home and browse), issue detail, login, signup, protected dashboard, protected profile, and 404. Search and filters are encoded in the URL. Access tokens stay in memory; refresh tokens are HttpOnly cookies. The UI uses system fonts and a restrained GitHub-inspired palette.
+Pages: issue search (home and browse), issue detail, login, signup, protected dashboard, protected profile, GSoC organizations and details, OAuth completion, and 404. Search and filters are encoded in the URL. Access tokens stay in memory; refresh tokens are HttpOnly cookies. The navbar theme toggle persists its selection in localStorage; dark is the default. Language, category and organization filters are shareable through the URL. OAuth buttons load real provider availability from the API; see `server/OAUTH_SETUP.md` for credentials. The UI uses system fonts and a restrained GitHub-inspired palette.

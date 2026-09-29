@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config client/vite.config.js client",
-    "build": "vite build --config client/vite.config.js client",
+    "build": "tsc -p client/tsconfig.json && vite build --config client/vite.config.js client",
     "lint": "eslint .",
     "preview": "vite preview --config client/vite.config.js client",
-    "lint:app": "eslint client/src server/api --config eslint.app.config.js"
+    "lint:app": "eslint client/src server/api --config eslint.app.config.js",
+    "typecheck": "tsc -p client/tsconfig.json && tsc -p server/tsconfig.api.json --noEmit"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

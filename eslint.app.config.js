@@ -1,31 +1,27 @@
-import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 export default [
-  { ignores: ["**/node_modules/**", "**/dist/**"] },
+  { ignores: ["**/node_modules/**", "**/dist/**", "**/dist-api/**"] },
   {
-    files: ["client/src/**/*.{js,jsx}", "server/api/**/*.js"],
-    ...js.configs.recommended,
+    files: ["client/src/**/*.{ts,tsx}", "server/api/**/*.ts"],
     languageOptions: {
+      parser: tseslint.parser,
       ecmaVersion: "latest",
       sourceType: "module",
-      parserOptions: { ecmaFeatures: { jsx: true } },
       globals: { ...globals.browser, ...globals.node },
     },
+    plugins: { "@typescript-eslint": tseslint.plugin },
     rules: {
-      ...js.configs.recommended.rules,
-      "no-unused-vars": [
+      "@typescript-eslint/no-unused-vars": [
         "error",
-        {
-          varsIgnorePattern: "^[A-Z_]",
-          argsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-        },
+        { argsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {
-    files: ["client/src/**/*.{js,jsx}"],
+    files: ["client/src/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
     rules: {
       "react-hooks/rules-of-hooks": "error",
