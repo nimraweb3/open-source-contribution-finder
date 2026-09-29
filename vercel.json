@@ -6,8 +6,32 @@
   "outputDirectory": "dist",
   "functions": { "api/index.ts": { "maxDuration": 60 } },
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Strict-Transport-Security": "max-age=31536000"
+      },
+      "continue": true
+    },
     { "src": "/api(?:/.*)?", "dest": "/api/index" },
+    {
+      "src": "/(?:login|signup|dashboard|profile|auth/complete|issues/[^/]+)(?:/)?",
+      "headers": {
+        "X-Robots-Tag": "noindex, follow",
+        "Cache-Control": "no-store"
+      },
+      "continue": true
+    },
     { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+    { "src": "/explore", "status": 308, "headers": { "Location": "/browse" } },
+    {
+      "src": "/(?:dashboard|profile|auth/complete|issues/[^/]+)(?:/)?",
+      "dest": "/app.html"
+    },
+    { "src": "/.*", "dest": "/404.html", "status": 404 }
   ]
 }
