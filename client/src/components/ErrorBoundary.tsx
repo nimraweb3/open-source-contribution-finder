@@ -1,5 +1,6 @@
+import type { PropsWithChildren } from "react";
 import { Component } from "react";
-export default class ErrorBoundary extends Component {
+export default class ErrorBoundary extends Component<PropsWithChildren> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
