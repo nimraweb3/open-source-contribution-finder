@@ -1,80 +1,200 @@
-# Contribution-Finder
+# Contribution Finder
 
-A MERN application for finding real open GitHub issues and tracking contributions from saved to merged. The homepage is the search tool: a GitHub-inspired light and dark interface with language and label filters, compact issue rows, and direct links to work on GitHub. No testimonials, marketing sections, or invented activity statistics.
+Find an open source issue you can actually start working on.
 
-## Quick demo
+Contribution Finder searches public GitHub issues by language, label, and area of interest. Read the context, follow the repository link, and start contributing. Sign in to keep a shortlist and track your work from **saved → in progress → submitted → merged**.
 
-Requires Node.js 22.12+ (24 recommended).
+**[Local setup](#run-it-locally)** · **[Usage](#using-the-app)** · **[Demo walkthrough](docs/DEMO.md)** · **[Deployment](VERCEL_DEPLOYMENT.md)**
+
+## What you can do
+
+- Search keywords or `owner/repository` without creating an account.
+- Select several programming languages, including custom names. Search frameworks and tools separately.
+- Filter for good first issues, help wanted, bugs, documentation, or enhancements. Hide assigned issues and sort by activity, creation date, or discussion count.
+- Explore web, Web3, mobile, and AI projects.
+- Browse a curated GSoC 2026 directory with contributor guides, repositories, and issue links.
+- Sign in with Google, GitHub, or email/password. Save issues, update their status, and keep your preferred technologies on your profile.
+- Switch between light and dark mode. Share a filtered search through its URL.
+
+## Demo
+
+The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished video.
+
+<!-- Replace this note with the actual published video link after recording. -->
+
+## Run it locally
+
+Use **Node.js 24** and npm. The development runner starts a real MongoDB process, so you do not need an Atlas account to try the project.
 
 ```sh
-# Repository root: install frontend tools
-npm install
-# Install API dependencies without the redundant default MongoDB download
-npm install --prefix server --ignore-scripts
-# Terminal 1: starts real MongoDB locally, seeds it, and serves the API
+git clone https://github.com/nimraweb3/open-source-contribution-finder.git
+cd open-source-contribution-finder
+npm ci
+npm ci --prefix server --ignore-scripts
+```
+
+Start the API in one terminal:
+
+```sh
 npm run demo --prefix server
-# Terminal 2: starts the React client
+```
+
+Start the frontend in another:
+
+```sh
 npm run dev
 ```
 
-Open http://localhost:5173. Create an account to bookmark issues, edit your profile, and track contributions. No demo password is hard-coded. The MongoDB runner downloads its binary on first use; subsequent runs use the cached binary and persisted `.demo-db` data.
+Open **http://localhost:5173**. The API runs on port **5000**, and Vite forwards `/api` requests to it.
 
-For an existing MongoDB installation or Atlas, follow [server setup](server/README.md), set `server/.env`, run `npm run seed --prefix server`, then `npm run dev --prefix server`. See [client setup](client/README.md) for separate frontend hosting.
+The first API startup downloads a MongoDB binary and can take a few minutes. Later runs reuse it. Local data lives in the ignored `server/.demo-db/` directory. The runner inserts nine sample listings without replacing existing data; the main search page still uses live GitHub results.
 
-## Structure
+Email/password signup works locally without OAuth configuration. Google and GitHub buttons become available when their credentials are configured. There is no shared demo account or default password.
 
-```text
-client/src/
-  components/    reusable controls, layout, issue cards, error boundary
-  pages/         home, browse, auth, details, dashboard, profile
-  context/       authentication and bookmark state
-  hooks/         API loading/error lifecycle
-  services/      fetch wrapper and token refresh
-server/api/
-  models/        User, Issue, Contribution
-  controllers/   authentication, profile, discovery, bookmarks
-  middleware/    JWT verification
-  routes/        REST endpoints and auth rate limiting
-  services/      token issuance and serialization
-  seed.ts        idempotent sample data
-  demo.ts        local MongoDB development runner
-```
+### Use an existing MongoDB database
 
-The original root `src/` and `server/src/` are retained to preserve pre-existing work. Root development/build scripts now target `client/`; server start scripts target `server/api/`.
-
-## Validation
+Copy `server/.env.example` to `server/.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`. Use different random secrets. Preserve existing environment files if you have already configured the app.
 
 ```sh
-npm run build
-npm run typecheck
-npm run lint:app
-npm run test:api --prefix server
+npm run dev --prefix server
 ```
 
-## New discovery features
+Use `npm run seed --prefix server` only if you want sample listings. The demo command always starts its own database; use the normal development command for Atlas. See the [API README](server/README.md) for details.
 
-- Google and GitHub authorization-code sign-in. Register your provider apps using [OAuth setup](server/OAUTH_SETUP.md); provider buttons remain disabled until credentials are configured. Email/password accounts work immediately.
-- Select up to eight languages together, including custom language names. Matches use GitHub language qualifiers; languages must be recognized by GitHub Linguist. Use the separate technology/framework field for tools such as React or Ethereum.
-- Web, Web3, Android/mobile, and AI categories search repository topics and then their live issues. To keep GitHub queries bounded, each category/technology search selects up to six popular, non-archived repositories with open issues; this scope is displayed above results. It is not an exhaustive category index. Selected languages also filter repository selection.
-- GSoC search, technology filtering, organization details, official links, selected repositories, and issue discovery for eight curated 2026 organizations. The official directory link provides the complete program list. Django’s separate issue tracker is linked directly.
-- A persisted theme toggle and profile avatars. Active frontend and backend application code is now strict TypeScript/TSX.
+## Configuration
 
-## Included
+Server settings go in `server/.env`; frontend settings go in `client/.env`. Both files stay out of Git.
 
-- JWT access tokens in memory, rotating hashed refresh tokens in HttpOnly cookies, bcrypt password hashing, validation, rate limiting, origin checks, and private contribution ownership.
-- Live GitHub search by topic or owner/repository, language and issue label filters, optional unassigned-only results, sorting by updated/created/comments, and pagination.
-- Bookmarks, contribution status tracking, and profile tech stack/interests.
-- Loading, error, retry, and empty states; accessible form labels and focus states; mobile navigation and reduced motion support.
-- All requested core pages and seed/configuration files.
+| Setting | Used by | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | Server | Persistent database connection |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET` | Server | Separate access/refresh signing secrets |
+| `CLIENT_URL` | Server | Frontend origin; locally `http://localhost:5173` |
+| `API_URL` | Server | OAuth callback origin; locally `http://localhost:5000` |
+| `PORT` | Server | Local API port; defaults to `5000` |
+| `GITHUB_TOKEN` | Server | Optional token for higher GitHub search limits |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Server | Google sign-in credentials |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Server | GitHub sign-in credentials |
+| `VITE_API_URL` | Client | API base path; use `/api` on Vercel |
+| `VITE_SITE_URL` | Client/build | Final HTTPS origin for canonicals and sitemap |
+| `VITE_NOINDEX` | Client/build | `true` for staging; `false` for production |
 
-The main page calls `/api/discover` for real GitHub issues; it never substitutes sample results when GitHub fails. Results are cached for one minute and stored in MongoDB so details and bookmarks remain available. Status reflects the last search, not a continuous sync. GitHub exposes at most the first 1,000 matches; use filters for broad searches. An optional `GITHUB_TOKEN` in `server/.env` increases GitHub's search limit. Keep it server-side.
+Anything prefixed with `VITE_` is public. Never use it for a secret or database connection string.
 
-The seed script and `/api/issues` retain the earlier demo data for development, separate from the live discovery feed. Maintainer publishing and email alerts are not included. Profile interests are stored; automated matching is not implemented.
+Follow [Google and GitHub setup](server/OAUTH_SETUP.md) for provider registration and local callback URLs. Production callbacks must use the deployed domain.
 
-For deployment, configure strong secrets and a managed MongoDB database and serve the frontend and API under the same site using HTTPS. The supplied Vercel routing serves pre-rendered public pages, keeps account/issue routes private from indexing, and returns 404 for unknown paths. Do not use the development database runner in production.
+## Using the app
 
-## Security and search visibility
+1. **Find a starting point.** Search a topic such as `accessibility` or a repository such as `facebook/react`. Select languages you can read comfortably. Multiple languages match alternatives, rather than requiring every selected language.
+2. **Narrow the work.** Try *Good first issue* and *Only unassigned issues*. Use the technology field for a framework such as React or a topic such as Ethereum.
+3. **Read before claiming.** Open the issue details, then follow the GitHub link. Check the discussion, linked pull requests, and contribution guidelines.
+4. **Keep a shortlist.** Sign in and save an issue. Open *My contributions* to change its status or remove it. Status updates are manual; marking an issue merged does not check GitHub or submit a pull request.
+5. **Explore a community.** On the GSoC page, search by organization or technology, read the contributor guide, and explore repositories. Check the official program page for current requirements and dates.
 
-See [security review](SECURITY_REVIEW.md) for the audit scope, fixes, regression coverage, and remaining deployment checks. Logout now invalidates access tokens immediately; existing sessions need to sign in again after this update.
+Filters are stored in the URL, so you can bookmark a search or share it.
 
-Run `npm run build` from the repository root with Node.js 24 to generate crawlable HTML for 12 public routes, plus metadata, `robots.txt`, and `sitemap.xml`. Set `VITE_SITE_URL` to your final HTTPS origin for production. Local and preview builds are excluded from indexing. The contribution guide is linked in the footer. Follow [deployment and indexing setup](VERCEL_DEPLOYMENT.md) before publishing; SEO improves discoverability but cannot guarantee rankings.
+## How it works
+
+The React client calls the Express API. The API searches GitHub, caches results briefly, and stores issue snapshots in MongoDB so saved issues have stable detail pages. Users and contribution status are stored separately from those snapshots.
+
+OAuth uses authorization codes and PKCE. Access tokens stay in browser memory; refresh tokens use an HttpOnly cookie. The API stores a refresh-token hash and checks the active session on protected requests. Logout invalidates the session immediately. A new sign-in replaces the previous session for that account.
+
+| Layer | Tools |
+| --- | --- |
+| Interface | React, TypeScript, Vite, React Router, Tailwind CSS |
+| State and motion | React Context, Framer Motion |
+| API | Node.js, Express, TypeScript |
+| Database | MongoDB, Mongoose |
+| Authentication | JWT, bcrypt, Google OpenID Connect, GitHub OAuth |
+| Hosting | Vercel frontend and API function; persistent MongoDB |
+
+## Project structure
+
+```text
+api/
+  index.ts                  Vercel entry point for Express
+client/
+  src/
+    components/             Shared controls, navigation, issue cards, SEO
+    context/                Authentication, bookmarks, theme
+    hooks/                  API request lifecycle
+    pages/                  Search, details, dashboard, profile, GSoC
+    services/               API client and session restoration
+    entry-server.tsx        Public-page rendering for production
+    styles.css              Theme tokens and application styles
+  .env.example
+  vite.config.js
+server/
+  api/
+    controllers/            Auth, OAuth, issues, contributions
+    middleware/             Session checks and shared rate limits
+    models/                 Users, issues, contributions, OAuth transactions
+    routes/                 REST endpoints
+    services/               Discovery, tokens, database, GSoC catalog
+    app.ts                  Express middleware and routing
+    server.ts               Standalone API startup
+    demo.ts                 Local MongoDB runner
+    seed.ts                 Sample listings
+    integration.test.ts     API and security regression coverage
+  .env.example
+scripts/
+  prerender.ts              Public HTML, metadata, sitemap, robots
+docs/
+  DEMO.md                   Walkthrough and recording instructions
+vercel.json                 Build, API routing, security headers
+```
+
+The active application is in `client/src` and `server/api`. The older root `src/` and `server/src/` directories are retained from the initial implementation and are not used by the current build.
+
+## Commands
+
+Run these from the repository root:
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the frontend |
+| `npm run demo --prefix server` | Start a local database and API |
+| `npm run dev --prefix server` | Start the API using `server/.env` |
+| `npm run typecheck` | Check client and server TypeScript |
+| `npm run lint:app` | Lint active application code |
+| `npm run test:api --prefix server` | Run tests with an isolated MongoDB |
+| `npm run build` | Build and pre-render the frontend |
+| `npm run build --prefix server` | Compile the standalone API |
+| `npm start --prefix server` | Run the compiled API |
+| `npm run preview` | Preview the frontend build; API runs separately |
+
+## Deploy on Vercel
+
+Import this GitHub repository with the **repository root** as the Vercel Root Directory. The checked-in configuration builds the frontend and exposes the API under `/api` on the same domain. Keep the GitHub connection enabled so pushes to the production branch create new deployments.
+
+You need a persistent MongoDB database, production environment variables, and provider callbacks registered for the final domain. The local database is not uploaded to Vercel.
+
+Follow the [deployment guide](VERCEL_DEPLOYMENT.md) for environment variables, callback addresses, and verification. Public pages are pre-rendered; account pages are noindex. Local and preview builds are excluded from search indexing.
+
+## Limits worth knowing
+
+- GitHub exposes the first 1,000 matches and applies rate limits. Narrow broad queries rather than paging indefinitely.
+- Category and technology searches select up to six matching popular repositories. The results explain that scope; they are not an exhaustive topic index.
+- Issue state reflects the most recent search. Check GitHub before starting work.
+- Language names must be recognized by GitHub. Use the technology field for frameworks or concepts.
+- The GSoC catalog contains eight selected 2026 organizations, not a live copy of the full directory.
+- Different sign-in methods are not automatically linked by email. Use the original method if an address is already registered.
+- Email verification, password reset, automatic merge tracking, maintainer publishing, and email alerts are not implemented.
+
+## Troubleshooting
+
+| Problem | Check |
+| --- | --- |
+| First API startup takes a while | MongoDB may still be downloading. Keep the terminal open for its status. |
+| Search reports a GitHub limit | Wait, narrow the query, or configure a server-side GitHub token. |
+| Provider sign-in is unavailable | Set both credentials and restart the API. Check `/api/auth/providers`. |
+| OAuth returns an error | Compare the callback with `API_URL`; check whether the email uses another sign-in method. |
+| Saved issues will not load | Check the API and database connection, then use Retry. |
+| Production reports a configuration error | Check the database URI, distinct signing secrets, and exact HTTPS origins. |
+| The site is missing from search | Set `VITE_SITE_URL`, redeploy, and check robots/sitemap and Search Console. Indexing is not immediate or guaranteed. |
+
+## Contributing
+
+Open an issue before a large refactor. For a small fix, keep the pull request focused, explain how to reproduce the problem, and list the checks you ran. Start with `npm run typecheck`, `npm run lint:app`, and the relevant tests.
+
+Do not include environment files, tokens, database exports, or real user information in issues or pull requests. The [security review](SECURITY_REVIEW.md) describes the current protections and review scope. Report suspected security problems privately rather than posting working credentials or exploit details.

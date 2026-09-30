@@ -44,7 +44,7 @@ Restart the API and reload the login page. Use **Continue with Google** or **Con
 - GitHub requests only `read:user` and `user:email`; it uses a verified email address. Provider access tokens are discarded after identity lookup.
 - App access tokens remain in memory. Rotating refresh tokens are stored as hashes in MongoDB and delivered in HttpOnly cookies. Tokens never appear in callback URLs.
 - Existing accounts are not silently linked by email. If an email already belongs to another sign-in method, use that original method. Account linking is not implemented.
-- One refresh session per account; another login replaces it. Access tokens expire after 15 minutes, refresh sessions after seven days. Logout revokes refresh access; already-issued access tokens expire normally.
+- One refresh session per account; another login replaces it. Access tokens expire after 15 minutes, refresh sessions after seven days. Logout revokes both access and refresh authorization immediately.
 - Production requires HTTPS, matching provider callback registrations, strong distinct JWT secrets, and same-site client/API hosting (prefer a reverse proxy). Set `NODE_ENV=production`, `CLIENT_URL`, and `API_URL` to your real origins. Google may require verification for public availability depending on its current policies.
 
 Automated tests validate the GitHub callback flow using isolated provider responses, state binding/replay rejection, and cookie session creation. They do not replace a real provider round trip with your registered credentials.

@@ -52,7 +52,7 @@ Follow [OAUTH_SETUP.md](OAUTH_SETUP.md) to register Google and GitHub apps and c
 
 Issue query parameters: `q`, `language`, `label`, `difficulty`, `sort` (`stars`, `difficulty`, or default recent updates), `page`. Results contain `issues`, `total`, and `page`; pages contain up to 12 listings. Status values: `saved`, `in progress`, `submitted`, `merged`.
 
-Protected endpoints require `Authorization: Bearer <accessToken>`. Access tokens expire after 15 minutes; refresh tokens after seven days. One refresh session is stored per account; signing in elsewhere replaces it. Logout revokes refresh capability; an already-issued access token remains valid until its short expiry.
+Protected endpoints require `Authorization: Bearer <accessToken>`. Access tokens expire after 15 minutes; refresh tokens after seven days. One refresh session is stored per account; signing in elsewhere replaces it. Logout revokes both access and refresh authorization immediately.
 
 Category and technology searches select up to six popular non-archived repositories with open issues, cached for ten minutes, then search their issues. Language filters apply to both stages; multiple languages are alternatives. The API returns a `scopeNote` explaining the limited repository selection. GSoC metadata is a curated catalog verified against the official 2026 program, not a live full-directory mirror.
 
