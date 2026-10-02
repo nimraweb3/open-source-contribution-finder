@@ -75,7 +75,9 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     assert.match(searchParams.get("q"), /no:assignee/);
     assert.equal(searchParams.get("page"), "50");
     let calls = 0;
-    const fakeGithub = async () => {
+    const fakeGithub = async (url) => {
+      if (String(url).includes("/repos/test/repository"))
+        return Response.json({ language: "TypeScript", stargazers_count: 42 });
       calls++;
       return {
         ok: true,
@@ -94,6 +96,7 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
               comments: 2,
               state: "open",
               updated_at: "2026-09-27T12:00:00Z",
+              created_at: "2026-09-20T12:00:00Z",
               user: { login: "maintainer" },
               assignees: [],
             },
@@ -107,6 +110,9 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     ]);
     assert.equal(calls, 1);
     assert.equal(live.issues[0].source, "github");
+    assert.equal(live.issues[0].language, "TypeScript");
+    assert.equal(live.issues[0].stars, 42);
+    assert.equal(live.issues[0].externalCreatedAt.toISOString(), "2026-09-20T12:00:00.000Z");
     assert.equal(String(live.issues[0]._id), String(duplicate.issues[0]._id));
     assert.equal(
       live.issues[0].url,

@@ -1,5 +1,6 @@
 import { findOrganization } from "./organizations.js";
 import { Issue } from "../models/index.js";
+import { repositoryMetadata } from "./repositoryMetadata.js";
 
 const cache = new Map<string, { expires: number; data: SearchData }>();
 const inFlight = new Map<string, Promise<SearchData>>();
@@ -142,6 +143,9 @@ async function search(input: SearchInput, fetcher: typeof fetch) {
   }
   const result: GithubSearch = await response.json();
   const items = result.items.filter((item) => !item.pull_request);
+  const metadata = await repositoryMetadata(
+    items.map((item) => item.repository_url.split("/repos/")[1]), headers, fetcher,
+  );
   const issues = await Promise.all(
     items.map((item) =>
       Issue.findOneAndUpdate(
@@ -152,6 +156,7 @@ async function search(input: SearchInput, fetcher: typeof fetch) {
             source: "github",
             title: item.title,
             repository: item.repository_url.split("/repos/")[1],
+            ...metadata.get(item.repository_url.split("/repos/")[1]),
             labels: item.labels.map((label) =>
               typeof label === "string" ? label : label.name,
             ),
@@ -164,6 +169,7 @@ async function search(input: SearchInput, fetcher: typeof fetch) {
             comments: item.comments,
             state: item.state,
             externalUpdatedAt: item.updated_at,
+            externalCreatedAt: item.created_at,
             author: item.user?.login || "",
             assigned: (item.assignees?.length || 0) > 0,
           },
@@ -228,6 +234,7 @@ interface GithubSearch {
     comments: number;
     state: string;
     updated_at: string;
+    created_at?: string;
     user?: { login: string };
     assignees?: unknown[];
   }[];

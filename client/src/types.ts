@@ -19,6 +19,7 @@ export interface Issue {
   comments?: number;
   state?: string;
   externalUpdatedAt?: string;
+  externalCreatedAt?: string;
   updatedAt: string;
   author?: string;
   assigned?: boolean;
