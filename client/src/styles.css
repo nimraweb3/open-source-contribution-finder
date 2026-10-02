@@ -1726,3 +1726,14 @@ select,
 .contribution-guide section { margin-block: 2rem; }
 .contribution-guide h2 { font-size: 1.2rem; margin-block: 1.5rem .75rem; }
 .contribution-guide p { line-height: 1.8; margin-block: .75rem; }
+ .issue-preview {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0.4rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}

@@ -33,6 +33,7 @@ const issueSchema = new mongoose.Schema(
     comments: Number,
     state: String,
     externalUpdatedAt: Date,
+    externalCreatedAt: Date,
     author: String,
     assigned: Boolean,
   },

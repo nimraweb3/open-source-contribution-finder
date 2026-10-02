@@ -58,6 +58,9 @@ export default function IssueCard({ issue }: { issue: Issue }) {
         >
           {issue.title}
         </Link>
+        <p className="issue-preview">
+          {issue.description.replace(/<[^>]*>/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[#*`>]/g, "").replace(/\s+/g, " ").trim().slice(0, 240)}
+        </p>
         <div className="issue-labels">
           {issue.labels.slice(0, 4).map((label) => (
             <Badge key={label}>{label}</Badge>
@@ -67,6 +70,7 @@ export default function IssueCard({ issue }: { issue: Issue }) {
           )}
         </div>
         <div className="issue-meta">
+          {issue.language && <span>{issue.language}</span>}
           {updated && <span>Updated {updated}</span>}
           {issue.author && <span>by {issue.author}</span>}
           <span className="comment-count">
