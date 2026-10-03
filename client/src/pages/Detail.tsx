@@ -12,7 +12,8 @@ import remarkGfm from "remark-gfm";
 export default function Detail() {
   const { id } = useParams();
   const location = useLocation();
-  const { mark } = useBookmarks();
+  const { ids, mark, error: bookmarkError } = useBookmarks();
+  const saved = Boolean(id && ids.includes(id));
   const {
     data: issue,
     loading,
@@ -25,6 +26,7 @@ export default function Detail() {
   const [busy, setBusy] = useState(false);
   async function save() {
     if (!user) return navigate("/login", { state: { from: `/issues/${id}` } });
+    if (saved) return;
     setBusy(true);
     try {
       await api(`/contributions/${id}`, { method: "POST" });
@@ -94,6 +96,8 @@ export default function Detail() {
           <aside className="detail-aside">
             <span className="section-kicker">Issue details</span>
             <dl>
+              {issue.language && <div><dt>Language</dt><dd>{issue.language}</dd></div>}
+              {issue.externalCreatedAt && <div><dt>Created</dt><dd>{new Date(issue.externalCreatedAt).toLocaleDateString()}</dd></div>}
               <div>
                 <dt>Source</dt>
                 <dd>
@@ -109,10 +113,12 @@ export default function Detail() {
                 <dd>{issue.comments || 0}</dd>
               </div>
             </dl>
-            <Button variant="secondary" disabled={busy} onClick={save}>
+            <Button variant="secondary" disabled={busy || saved || Boolean(bookmarkError)} onClick={save}>
               <Bookmark size={17} />
-              {busy ? "Saving…" : "Save for later"}
+              {busy ? "Saving…" : saved ? "Saved to dashboard" : "Save for later"}
             </Button>
+            {saved && <Link className="text-link" to="/dashboard">Manage contribution</Link>}
+            {bookmarkError && <p className="error" role="alert">{bookmarkError}</p>}
             <a
               className="button primary"
               href={issue.url}
