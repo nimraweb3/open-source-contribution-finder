@@ -6,10 +6,6 @@ interface IssueCardProps {
 }
 
 const IssueCard = ({ issue }: IssueCardProps) => {
-  // ---------------------------------------------
-  // Format GitHub date
-  // ---------------------------------------------
-
   const formatDate = (date: string) => {
     const parsedDate = new Date(date);
 
