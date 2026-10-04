@@ -10,7 +10,7 @@ import type { Issue } from "../types/issue";
 
 const Explore = () => {
   const [searchParams] = useSearchParams();
-  // A new search owns its results and pagination, so late responses cannot mix searches.
+ 
   return <ExploreResults key={searchParams.toString()} />;
 };
 
