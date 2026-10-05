@@ -18,9 +18,7 @@ Contribution Finder searches public GitHub issues by language, label, and area o
 
 ## Demo
 
-The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished video.
-
-<!-- Replace this note with the actual published video link after recording. -->
+The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished vid
 
 ## Run it locally
 
@@ -65,19 +63,19 @@ Use `npm run seed --prefix server` only if you want sample listings. The demo co
 
 Server settings go in `server/.env`; frontend settings go in `client/.env`. Both files stay out of Git.
 
-| Setting | Used by | Purpose |
-| --- | --- | --- |
-| `MONGODB_URI` | Server | Persistent database connection |
-| `JWT_SECRET`, `JWT_REFRESH_SECRET` | Server | Separate access/refresh signing secrets |
-| `CLIENT_URL` | Server | Frontend origin; locally `http://localhost:5173` |
-| `API_URL` | Server | OAuth callback origin; locally `http://localhost:5000` |
-| `PORT` | Server | Local API port; defaults to `5000` |
-| `GITHUB_TOKEN` | Server | Optional token for higher GitHub search limits |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Server | Google sign-in credentials |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Server | GitHub sign-in credentials |
-| `VITE_API_URL` | Client | API base path; use `/api` on Vercel |
-| `VITE_SITE_URL` | Client/build | Final HTTPS origin for canonicals and sitemap |
-| `VITE_NOINDEX` | Client/build | `true` for staging; `false` for production |
+| Setting                                    | Used by      | Purpose                                                |
+| ------------------------------------------ | ------------ | ------------------------------------------------------ |
+| `MONGODB_URI`                              | Server       | Persistent database connection                         |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET`         | Server       | Separate access/refresh signing secrets                |
+| `CLIENT_URL`                               | Server       | Frontend origin; locally `http://localhost:5173`       |
+| `API_URL`                                  | Server       | OAuth callback origin; locally `http://localhost:5000` |
+| `PORT`                                     | Server       | Local API port; defaults to `5000`                     |
+| `GITHUB_TOKEN`                             | Server       | Optional token for higher GitHub search limits         |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Server       | Google sign-in credentials                             |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Server       | GitHub sign-in credentials                             |
+| `VITE_API_URL`                             | Client       | API base path; use `/api` on Vercel                    |
+| `VITE_SITE_URL`                            | Client/build | Final HTTPS origin for canonicals and sitemap          |
+| `VITE_NOINDEX`                             | Client/build | `true` for staging; `false` for production             |
 
 Anything prefixed with `VITE_` is public. Never use it for a secret or database connection string.
 
@@ -99,14 +97,14 @@ The React client calls the Express API. The API searches GitHub, caches results 
 
 OAuth uses authorization codes and PKCE. Access tokens stay in browser memory; refresh tokens use an HttpOnly cookie. The API stores a refresh-token hash and checks the active session on protected requests. Logout invalidates the session immediately. A new sign-in replaces the previous session for that account.
 
-| Layer | Tools |
-| --- | --- |
-| Interface | React, TypeScript, Vite, React Router, Tailwind CSS |
-| State and motion | React Context, Framer Motion |
-| API | Node.js, Express, TypeScript |
-| Database | MongoDB, Mongoose |
-| Authentication | JWT, bcrypt, Google OpenID Connect, GitHub OAuth |
-| Hosting | Vercel frontend and API function; persistent MongoDB |
+| Layer            | Tools                                                |
+| ---------------- | ---------------------------------------------------- |
+| Interface        | React, TypeScript, Vite, React Router, Tailwind CSS  |
+| State and motion | React Context, Framer Motion                         |
+| API              | Node.js, Express, TypeScript                         |
+| Database         | MongoDB, Mongoose                                    |
+| Authentication   | JWT, bcrypt, Google OpenID Connect, GitHub OAuth     |
+| Hosting          | Vercel frontend and API function; persistent MongoDB |
 
 ## Project structure
 
@@ -150,18 +148,18 @@ The active application is in `client/src` and `server/api`. The older root `src/
 
 Run these from the repository root:
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the frontend |
-| `npm run demo --prefix server` | Start a local database and API |
-| `npm run dev --prefix server` | Start the API using `server/.env` |
-| `npm run typecheck` | Check client and server TypeScript |
-| `npm run lint:app` | Lint active application code |
-| `npm run test:api --prefix server` | Run tests with an isolated MongoDB |
-| `npm run build` | Build and pre-render the frontend |
-| `npm run build --prefix server` | Compile the standalone API |
-| `npm start --prefix server` | Run the compiled API |
-| `npm run preview` | Preview the frontend build; API runs separately |
+| Command                            | What it does                                    |
+| ---------------------------------- | ----------------------------------------------- |
+| `npm run dev`                      | Start the frontend                              |
+| `npm run demo --prefix server`     | Start a local database and API                  |
+| `npm run dev --prefix server`      | Start the API using `server/.env`               |
+| `npm run typecheck`                | Check client and server TypeScript              |
+| `npm run lint:app`                 | Lint active application code                    |
+| `npm run test:api --prefix server` | Run tests with an isolated MongoDB              |
+| `npm run build`                    | Build and pre-render the frontend               |
+| `npm run build --prefix server`    | Compile the standalone API                      |
+| `npm start --prefix server`        | Run the compiled API                            |
+| `npm run preview`                  | Preview the frontend build; API runs separately |
 
 ## Deploy on Vercel
 
@@ -183,15 +181,15 @@ Follow the [deployment guide](VERCEL_DEPLOYMENT.md) for environment variables, c
 
 ## Troubleshooting
 
-| Problem | Check |
-| --- | --- |
-| First API startup takes a while | MongoDB may still be downloading. Keep the terminal open for its status. |
-| Search reports a GitHub limit | Wait, narrow the query, or configure a server-side GitHub token. |
-| Provider sign-in is unavailable | Set both credentials and restart the API. Check `/api/auth/providers`. |
-| OAuth returns an error | Compare the callback with `API_URL`; check whether the email uses another sign-in method. |
-| Saved issues will not load | Check the API and database connection, then use Retry. |
-| Production reports a configuration error | Check the database URI, distinct signing secrets, and exact HTTPS origins. |
-| The site is missing from search | Set `VITE_SITE_URL`, redeploy, and check robots/sitemap and Search Console. Indexing is not immediate or guaranteed. |
+| Problem                                  | Check                                                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| First API startup takes a while          | MongoDB may still be downloading. Keep the terminal open for its status.                                             |
+| Search reports a GitHub limit            | Wait, narrow the query, or configure a server-side GitHub token.                                                     |
+| Provider sign-in is unavailable          | Set both credentials and restart the API. Check `/api/auth/providers`.                                               |
+| OAuth returns an error                   | Compare the callback with `API_URL`; check whether the email uses another sign-in method.                            |
+| Saved issues will not load               | Check the API and database connection, then use Retry.                                                               |
+| Production reports a configuration error | Check the database URI, distinct signing secrets, and exact HTTPS origins.                                           |
+| The site is missing from search          | Set `VITE_SITE_URL`, redeploy, and check robots/sitemap and Search Console. Indexing is not immediate or guaranteed. |
 
 ## Contributing
 
