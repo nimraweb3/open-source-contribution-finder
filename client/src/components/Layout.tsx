@@ -114,7 +114,11 @@ export function Footer() {
       </span>
       <div>
         <Link to="/contribution-guide">Contribution guide</Link>
-        <a href="https://github.com" target="_blank" rel="noreferrer">
+        <a
+          href="https://github.com/nimraweb3/open-source-contribution-finder"
+          target="_blank"
+          rel="noreferrer"
+        >
           GitHub <ExternalLink size={12} />
         </a>
         <span>Independent project. Not affiliated with GitHub.</span>

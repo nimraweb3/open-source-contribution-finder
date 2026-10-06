@@ -2,11 +2,17 @@
 
 Find an open source issue you can actually start working on.
 
-**[Open the live app](https://open-source-contribution-finder.vercel.app/)**
+[![CI](https://github.com/nimraweb3/open-source-contribution-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/nimraweb3/open-source-contribution-finder/actions/workflows/ci.yml) · [MIT license](LICENSE) · **[Live app](https://open-source-contribution-finder.vercel.app/)**
+
+![Explore real GitHub issues with language and beginner-friendly filters](docs/media/explore.jpg)
 
 Contribution Finder searches public GitHub issues by language, label, and area of interest. Read the context, follow the repository link, and start contributing. Sign in to keep a shortlist and track your work from **saved → in progress → submitted → merged**.
 
 **[Local setup](#run-it-locally)** · **[Usage](#using-the-app)** · **[Demo walkthrough](docs/DEMO.md)** · **[Deployment](VERCEL_DEPLOYMENT.md)**
+
+## Why this exists
+
+Finding a suitable first issue often means searching across repositories, checking labels, and keeping a pile of tabs open. Contribution Finder puts discovery and a personal shortlist in one place, while keeping the original GitHub discussion one click away.
 
 ## What you can do
 
@@ -20,7 +26,66 @@ Contribution Finder searches public GitHub issues by language, label, and area o
 
 ## Demo
 
-The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished video.
+[Watch the 60-second animated walkthrough](docs/media/walkthrough.gif): filtered React issues → issue details → save → dashboard → progress → GSoC. It uses captures of the real deployed app, with pauses between steps rather than a continuous screen recording.
+
+| Issue details | My contributions | GSoC organizations |
+| --- | --- | --- |
+| ![Issue details](docs/media/issue.jpg) | ![Contribution dashboard](docs/media/dashboard.jpg) | ![GSoC directory](docs/media/gsoc.jpg) |
+
+For a narrated video, follow the [recording guide](docs/DEMO.md). Search results in the captures reflect the recording date and will change.
+
+## How it works
+
+The React client calls the Express API. The API searches GitHub, caches results briefly, and stores issue snapshots in MongoDB so saved issues have stable detail pages. Users and contribution status are stored separately from those snapshots.
+
+OAuth uses authorization codes and PKCE. Access tokens stay in browser memory; refresh tokens use an HttpOnly cookie. The API stores a refresh-token hash and checks the active session on protected requests. Logout invalidates the session immediately. A new sign-in replaces the previous session for that account.
+
+| Layer            | Tools                                                |
+| ---------------- | ---------------------------------------------------- |
+| Interface        | React, TypeScript, Vite, React Router, Tailwind CSS  |
+| State and motion | React Context, Framer Motion                         |
+| API              | Node.js, Express, TypeScript                         |
+| Database         | MongoDB, Mongoose                                    |
+| Authentication   | JWT, bcrypt, Google OpenID Connect, GitHub OAuth     |
+| Hosting          | Vercel frontend and API function; persistent MongoDB |
+
+## Project structure
+
+```text
+api/
+  index.ts                  Vercel entry point for Express
+client/
+  src/
+    components/             Shared controls, navigation, issue cards, SEO
+    context/                Authentication, bookmarks, theme
+    hooks/                  API request lifecycle
+    pages/                  Search, details, dashboard, profile, GSoC
+    services/               API client and session restoration
+    entry-server.tsx        Public-page rendering for production
+    styles.css              Theme tokens and application styles
+  .env.example
+  vite.config.js
+server/
+  api/
+    controllers/            Auth, OAuth, issues, contributions
+    middleware/             Session checks and shared rate limits
+    models/                 Users, issues, contributions, OAuth transactions
+    routes/                 REST endpoints
+    services/               Discovery, tokens, database, GSoC catalog
+    app.ts                  Express middleware and routing
+    server.ts               Standalone API startup
+    demo.ts                 Local MongoDB runner
+    seed.ts                 Sample listings
+    integration.test.ts     API and security regression coverage
+  .env.example
+scripts/
+  prerender.ts              Public HTML, metadata, sitemap, robots
+docs/
+  DEMO.md                   Walkthrough and recording instructions
+vercel.json                 Build, API routing, security headers
+```
+
+The frontend lives in `client/src`; the backend lives in `server/api`.
 
 ## Run it locally
 
@@ -93,59 +158,6 @@ Follow [Google and GitHub setup](server/OAUTH_SETUP.md) for provider registratio
 
 Filters are stored in the URL, so you can bookmark a search or share it.
 
-## How it works
-
-The React client calls the Express API. The API searches GitHub, caches results briefly, and stores issue snapshots in MongoDB so saved issues have stable detail pages. Users and contribution status are stored separately from those snapshots.
-
-OAuth uses authorization codes and PKCE. Access tokens stay in browser memory; refresh tokens use an HttpOnly cookie. The API stores a refresh-token hash and checks the active session on protected requests. Logout invalidates the session immediately. A new sign-in replaces the previous session for that account.
-
-| Layer            | Tools                                                |
-| ---------------- | ---------------------------------------------------- |
-| Interface        | React, TypeScript, Vite, React Router, Tailwind CSS  |
-| State and motion | React Context, Framer Motion                         |
-| API              | Node.js, Express, TypeScript                         |
-| Database         | MongoDB, Mongoose                                    |
-| Authentication   | JWT, bcrypt, Google OpenID Connect, GitHub OAuth     |
-| Hosting          | Vercel frontend and API function; persistent MongoDB |
-
-## Project structure
-
-```text
-api/
-  index.ts                  Vercel entry point for Express
-client/
-  src/
-    components/             Shared controls, navigation, issue cards, SEO
-    context/                Authentication, bookmarks, theme
-    hooks/                  API request lifecycle
-    pages/                  Search, details, dashboard, profile, GSoC
-    services/               API client and session restoration
-    entry-server.tsx        Public-page rendering for production
-    styles.css              Theme tokens and application styles
-  .env.example
-  vite.config.js
-server/
-  api/
-    controllers/            Auth, OAuth, issues, contributions
-    middleware/             Session checks and shared rate limits
-    models/                 Users, issues, contributions, OAuth transactions
-    routes/                 REST endpoints
-    services/               Discovery, tokens, database, GSoC catalog
-    app.ts                  Express middleware and routing
-    server.ts               Standalone API startup
-    demo.ts                 Local MongoDB runner
-    seed.ts                 Sample listings
-    integration.test.ts     API and security regression coverage
-  .env.example
-scripts/
-  prerender.ts              Public HTML, metadata, sitemap, robots
-docs/
-  DEMO.md                   Walkthrough and recording instructions
-vercel.json                 Build, API routing, security headers
-```
-
-The active application is in `client/src` and `server/api`. The older root `src/` and `server/src/` directories are retained from the initial implementation and are not used by the current build.
-
 ## Commands
 
 Run these from the repository root:
@@ -197,6 +209,10 @@ Follow the [deployment guide](VERCEL_DEPLOYMENT.md) for environment variables, c
 
 ## Contributing
 
-Open an issue before a large refactor. For a small fix, keep the pull request focused, explain how to reproduce the problem, and list the checks you ran. Start with `npm run typecheck`, `npm run lint:app`, and the relevant tests.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, coding conventions, bug reports, and pull requests. CI checks types, lint, API behavior, and both production builds.
 
 Do not include environment files, tokens, database exports, or real user information in issues or pull requests. The [security review](SECURITY_REVIEW.md) describes the current protections and review scope. Report suspected security problems privately rather than posting working credentials or exploit details.
+
+## License
+
+[MIT](LICENSE).

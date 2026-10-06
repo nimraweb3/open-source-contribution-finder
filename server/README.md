@@ -64,4 +64,4 @@ npm run test:api
 
 Integration tests start an isolated MongoDB and verify registration validation, duplicate email handling, login, token rotation/replay rejection, logout, query escaping, filters, protected endpoints, per-user ownership, profile updates, and contribution status persistence.
 
-The pre-existing TypeScript API is preserved in `src/`; run `npm run dev:legacy` if needed. The new application uses `api/` and does not depend on the legacy code.
+The application lives in `api/`. Run `npm test` or `npm run test:api` for its integration suite.

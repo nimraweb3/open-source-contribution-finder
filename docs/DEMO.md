@@ -1,5 +1,7 @@
 # Demo walkthrough
 
+[View the 60-second animated walkthrough](media/walkthrough.gif). It assembles real production screenshots of search, details, saving, progress, and GSoC into a stepped demo. It is not a continuous video recording. The instructions below are for recording a narrated version.
+
 A two-minute screen recording is enough to show the project. Record the app itself; skip the editor and setup terminals.
 
 ## Before recording
