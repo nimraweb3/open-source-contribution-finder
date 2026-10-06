@@ -32,3 +32,6 @@ server/dist-api/
 .env.*
 !.env.example
 .vercel/
+
+# Personal learning notes (kept locally)
+/PROJECT_EXPLAINED.md

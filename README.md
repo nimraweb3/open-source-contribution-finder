@@ -2,6 +2,8 @@
 
 Find an open source issue you can actually start working on.
 
+**[Open the live app](https://open-source-contribution-finder.vercel.app/)**
+
 Contribution Finder searches public GitHub issues by language, label, and area of interest. Read the context, follow the repository link, and start contributing. Sign in to keep a shortlist and track your work from **saved → in progress → submitted → merged**.
 
 **[Local setup](#run-it-locally)** · **[Usage](#using-the-app)** · **[Demo walkthrough](docs/DEMO.md)** · **[Deployment](VERCEL_DEPLOYMENT.md)**
@@ -18,7 +20,7 @@ Contribution Finder searches public GitHub issues by language, label, and area o
 
 ## Demo
 
-The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished vid
+The [two-minute walkthrough](docs/DEMO.md) covers search, filters, issue details, saved work, and GSoC organizations. It includes recording instructions and a place to add the finished video.
 
 ## Run it locally
 
@@ -164,6 +166,8 @@ Run these from the repository root:
 ## Deploy on Vercel
 
 Import this GitHub repository with the **repository root** as the Vercel Root Directory. The checked-in configuration builds the frontend and exposes the API under `/api` on the same domain. Keep the GitHub connection enabled so pushes to the production branch create new deployments.
+
+Use the live link above for the current production app. Vercel also creates a unique URL for each deployment; an old deployment URL continues to show that older version.
 
 You need a persistent MongoDB database, production environment variables, and provider callbacks registered for the final domain. The local database is not uploaded to Vercel.
 
