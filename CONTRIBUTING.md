@@ -4,7 +4,7 @@ Small fixes, clearer documentation, and reproducible bug reports are welcome. Op
 
 ## Local setup
 
-Use Node.js 24. Fork and clone the repository, then run from its root:
+Use Node.js.  Fork and clone the repository, then run from its root:
 
 ```sh
 npm ci
