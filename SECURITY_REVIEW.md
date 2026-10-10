@@ -2,6 +2,15 @@
 
 Scope: active `client/src` and `server/api`, dependency lockfiles, and the Vercel deployment configuration. This is a code review with regression tests, not an independent penetration test or a guarantee that every vulnerability has been found.
 
+## Follow-up — 2026-10-10
+
+- Malformed JSON now returns a fixed error message instead of potentially echoing submitted values from the parser's diagnostic text. Regression coverage checks this response.
+- Database connection sharing now retains only an in-flight promise. A later disconnect can establish a new connection instead of reusing an already-resolved promise. Integration coverage disconnects and reconnects before exercising the API again.
+- Updated the transitive `source-map-js` dependency to resolve GHSA-68fv-2mgg-jv7q. Root and server audits, including development dependencies, reported zero known vulnerabilities after the update.
+- Fixed a syntax error in the public-page prerender script that blocked new production builds. Existing production health, language/category searches, GSoC, robots, and sitemap checks returned successful responses.
+
+Provider availability checks are not a new end-to-end OAuth login test. The actual Google/GitHub consent round trips were verified in the earlier deployment pass; no provider configuration was changed in this follow-up.
+
 ## Fixed
 
 - **Access tokens survived logout.** JWTs now contain a server-side session ID. Every authenticated request checks that session, and logout revokes both access and refresh authorization. Tokens require HS256, the application issuer/audience, a valid subject, and the correct access/refresh token type. Existing sessions must sign in again after this update. The existing single-session-per-account behavior is retained: a new sign-in replaces the previous session.

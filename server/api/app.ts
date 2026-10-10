@@ -34,12 +34,10 @@ if (process.env.VERCEL) {
       await connectDatabase();
       next();
     } catch {
-      res
-        .status(503)
-        .json({
-          message:
-            "The service is not ready. Check the deployment configuration and database connection.",
-        });
+      res.status(503).json({
+        message:
+          "The service is not ready. Check the deployment configuration and database connection.",
+      });
     }
   });
 }
@@ -71,6 +69,9 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", router);
 app.use((req, res) => res.status(404).json({ message: "Endpoint not found." }));
 const handleError: ErrorRequestHandler = (error, req, res, _next) => {
+  // Parser errors may include the submitted body in their message.
+  if (error.type === "entity.parse.failed")
+    return res.status(400).json({ message: "Invalid JSON request body." });
   if (error.type === "entity.too.large")
     return res.status(413).json({ message: "Request body is too large." });
   if ([400, 503].includes(error.status))

@@ -11,11 +11,14 @@ const { app } = await import("./app.js");
 const { Issue, User, Contribution } = await import("./models/index.js");
 const { discover, buildSearch } = await import("./services/discovery.js");
 const { safeReturn } = await import("./controllers/oauth.js");
+const { connectDatabase } = await import("./services/database.js");
 test("authentication, refresh rotation, filtering, ownership, and contribution lifecycle", async () => {
   const mongo = await MongoMemoryServer.create({
     binary: { version: "7.0.14" },
   });
-  await mongoose.connect(mongo.getUri());
+  const previousDatabaseUri = process.env.MONGODB_URI;
+  process.env.MONGODB_URI = mongo.getUri();
+  await Promise.all([connectDatabase(), connectDatabase()]);
   await Promise.all([User.init(), Issue.init(), Contribution.init()]);
   const server = app.listen(0);
   await new Promise((resolve) => server.once("listening", resolve));
@@ -37,6 +40,15 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
     };
   }
   try {
+    const malformed = await fetch(base + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: '{"password":"private-test-value",',
+    });
+    assert.equal(malformed.status, 400);
+    assert.deepEqual(await malformed.json(), {
+      message: "Invalid JSON request body.",
+    });
     for (const path of ["//evil.test", "/%2fevil.test", "/%5cevil.test", "/auth/complete", "/%0d%0aevil"])
       assert.equal(safeReturn(path), "/dashboard");
     assert.equal(safeReturn("/browse?languages=C%2B%2B"), "/browse?languages=C%2B%2B");
@@ -452,9 +464,15 @@ test("authentication, refresh rotation, filtering, ownership, and contribution l
         password: "wrong",
       });
     assert.equal(limited.status, 429);
+    await mongoose.disconnect();
+    await Promise.all([connectDatabase(), connectDatabase()]);
+    assert.equal(mongoose.connection.readyState, 1);
+    assert.equal((await request("/gsoc")).status, 200);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     await mongoose.disconnect();
     await mongo.stop();
+    if (previousDatabaseUri === undefined) delete process.env.MONGODB_URI;
+    else process.env.MONGODB_URI = previousDatabaseUri;
   }
 });

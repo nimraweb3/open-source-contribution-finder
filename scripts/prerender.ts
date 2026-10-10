@@ -11,8 +11,7 @@ if (site) {
   const url = new URL(site);
   if (
     url.protocol !== "https:" ||
-    url.origin !== site ||/
-    
+    url.origin !== site ||
     url.username ||
     url.password
   )
